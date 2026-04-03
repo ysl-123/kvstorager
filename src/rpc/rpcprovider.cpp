@@ -222,15 +222,28 @@ void RpcProvider::OnMessage(const muduo::net::TcpConnectionPtr &conn, muduo::net
   // new UserService().Login(controller, request, response, done)
 
   /*
-  为什么下面这个service->CallMethod 要这么写？或者说为什么这么写就可以直接调用远程业务方法了
-  这个service在运行的时候会是注册的service
-  // 用户注册的service类 继承 .protoc生成的serviceRpc类 继承 google::protobuf::Service
-  // 用户注册的service类里面没有重写CallMethod方法，是 .protoc生成的serviceRpc类 里面重写了google::protobuf::Service中
-  的纯虚函数CallMethod，而 .protoc生成的serviceRpc类 会根据传入参数自动调取 生成的xx方法（如Login方法），
-  由于xx方法被 用户注册的service类 重写了，因此这个方法运行的时候会调用 用户注册的service类 的xx方法
-  真的是妙呀
+ void FiendServiceRpc::CallMethod(const ::PROTOBUF_NAMESPACE_ID::MethodDescriptor* method,
+                             ::PROTOBUF_NAMESPACE_ID::RpcController* controller,
+                             const ::PROTOBUF_NAMESPACE_ID::Message* request,
+                             ::PROTOBUF_NAMESPACE_ID::Message* response,
+                             ::google::protobuf::Closure* done) {
+  GOOGLE_DCHECK_EQ(method->service(), file_level_service_descriptors_friend_2eproto[0]);
+  switch(method->index()) {
+    case 0:
+      GetFriendsList(controller,
+             ::PROTOBUF_NAMESPACE_ID::internal::DownCast<const ::fixbug::GetFriendsListRequest*>(
+                 request),
+             ::PROTOBUF_NAMESPACE_ID::internal::DownCast<::fixbug::GetFriendsListResponse*>(
+                 response),
+             done);
+      break;
+    default:
+      GOOGLE_LOG(FATAL) << "Bad method index; this should never happen.";
+      break;
+  }
+}
   */
-  //真正调用方法
+  //根据上面一看，就可以知道下面的CallMethod就会主动调用方法了
   service->CallMethod(method, nullptr, request, response, done);
 }
 

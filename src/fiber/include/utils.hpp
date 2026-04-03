@@ -79,8 +79,13 @@ static std::string BacktraceToString(int size, int skip, const std::string &pref
 }
 
 // 断言处理
+// 目的是期望condition是true
 static void CondPanic(bool condition, std::string err) {
   if (!condition) {
+    /*__FILE__ 和 __LINE__：这是 C++ 编译器的内置宏。它们会自动被替换成当前这行代码所在的文件名和行号（比如 scheduler.cc:42）
+      BacktraceToString(6, 3, "")：这是一个非常实用的调试函数（通常底层封装了 Linux 的 backtrace 和 backtrace_symbols 函数）。
+      它的作用是顺藤摸瓜，把程序是怎么一步步运行到报错这一行的历史轨迹全打印出来。
+    */
     std::cout << "[assert by] (" << __FILE__ << ":" << __LINE__ << "),err: " << err << std::endl;
     std::cout << "[backtrace]\n" << BacktraceToString(6, 3, "") << std::endl;
     assert(condition);

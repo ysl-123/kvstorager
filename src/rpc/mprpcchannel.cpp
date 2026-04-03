@@ -159,9 +159,12 @@ MprpcChannel::MprpcChannel(string ip, short port, bool connectNow) : m_ip(ip), m
   // uint16_t port = atoi(MprpcApplication::GetInstance().GetConfig().Load("rpcserverport").c_str());
   // rpc调用方想调用service_name的method_name服务，需要查询zk上该服务所在的host信息
   //  /UserServiceRpc/Login
+
+  //connectNow  是否立即建立连接
+  //可以允许延迟连接 如果connectNow=false  直接return所以就在MprpcChannel::CallMethod的时候进行一次连接呢。
   if (!connectNow) {
     return;
-  }  //可以允许延迟连接
+  }  
   std::string errMsg;
   auto rt = newConnect(ip.c_str(), port, &errMsg);
   int tryCount = 3;

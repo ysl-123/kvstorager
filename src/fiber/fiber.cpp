@@ -42,6 +42,7 @@ Fiber::ptr Fiber::GetThis() {
   }
   // 创建主协程并初始化
   Fiber::ptr main_fiber(new Fiber);
+  //这里断言成功因为 Fiber（）构造函数里SetThis(this);
   CondPanic(cur_fiber == main_fiber.get(), "cur_fiber need to be main_fiber");
   cur_thread_fiber = main_fiber;
   return cur_fiber->shared_from_this();

@@ -1,8 +1,9 @@
 syntax = "proto3";
-
+//客户端 ↔ 服务端
 
 package raftKVRpcProctoc; //所在的命名空间
 
+//proto3可能不生成，强制编译器把 RPC 的基类代码生成出来。
 option cc_generic_services = true;  //开启stub服务
 
 // 日志实体

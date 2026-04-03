@@ -1,5 +1,5 @@
 syntax = "proto3";
-
+//服务端 ↔ 服务端
 
 package raftRpcProctoc; //所在的命名空间
 
@@ -7,52 +7,51 @@ option cc_generic_services = true;  //开启stub服务
 
 // 日志实体
 message LogEntry{
-    bytes Command  =1;
-	int32 LogTerm   =2;
-	int32 LogIndex  = 3;
+    bytes Command  =1;//客户端发来的具体操作（比如 x = 10）。
+	int32 LogTerm   =2;//这条日志是在哪个老大的任期内被创建的。
+	int32 LogIndex  = 3;//这条日志在账本中的行号（绝对位置）
 }
-// AppendEntriesArgs 由leader复制log条目，也可以当做是心跳连接，注释中的rf为leader节点
+//Leader 发给小弟的同步请求
 message AppendEntriesArgs  {
 	//	下面几个参数和论文中相同
-	int32 Term        =1;
-	int32 LeaderId       =2;
-	int32 PrevLogIndex =3;
-	int32 PrevLogTerm  =4;
-	repeated LogEntry Entries  = 5;
-	int32 LeaderCommit  = 6;
+	int32 Term        =1;  //我的任期号
+	int32 LeaderId       =2;  //我的 ID
+	int32 PrevLogIndex =3;   //我要发给你的这批新日志的前一条日志的行号
+	int32 PrevLogTerm  =4;  //这条前驱日志的任期号
+	repeated LogEntry Entries  = 5;//这次要追加的新日志数组。（如果是发心跳，这个数组就是空的）
+	int32 LeaderCommit  = 6;  //我（Leader）已经确认提交到哪一步了。（潜台词：“行号在这个数字之前的日志，我已经稳稳地存盘了，你也可以放心把它应用到你的状态机里了。
 }
 
-// AppendEntriesReply 论文中没有提及返回要设置哪些状态
+// 小弟给 Leader 的回复
 message AppendEntriesReply {
-	int32 Term =1;             // leader的term可能是与Follower不同的，
-	bool Success      =2;
-	int32 UpdateNextIndex = 3;               //快速调整leader对应的nextIndex
+	int32 Term =1;             // 我的当前任期。（Leader 收到后会看一眼，如果发现小弟的 Term 比自己大，Leader 就会立马认怂，自己降级为小弟）。
+	bool Success      =2;  //是否成功追加了日志。（也就是前面说的 PrevLogIndex 和 PrevLogTerm 是否匹配成功）。
+	/*如果日志匹配失败（Success=false），Leader 原本需要一条一条往回找匹配点，太慢了。
+	这个字段是小弟直接告诉 Leader：“别瞎猜了，直接从这个 Index 开始发给我吧！”（快速回退机制）。*/
+	int32 UpdateNextIndex = 3;               
 	int32 AppState        =4; // 用来标识节点（网络）状态
 }
-
+//候选人拉票请求
 message RequestVoteArgs  {
-	int32 Term         =1;
-	int32 CandidateId  =2;
-	int32 LastLogIndex =3;
-	int32 LastLogTerm  =4;
+	int32 Term         =1;//我的任期号（为了竞选，我已经把 Term 加 1 了）
+	int32 CandidateId  =2;//我的 ID
+	int32 LastLogIndex =3;//我账本上最后一条日志的行号
+	int32 LastLogTerm  =4;//我账本上最后一条日志的任期
 }
 
-// RequestVoteReply
-// example RequestVote RPC reply structure.
-// field names must start with capital letters!
+//投票回复
 message RequestVoteReply  {
-	// Your data here (2A).
-	int32 Term        =1;
-	bool VoteGranted  =2;
-	int32 VoteState   =3;
+	int32 Term        =1;//我的当前任期（同样，如果比候选人高，候选人就得乖乖回去当小弟）
+	bool VoteGranted  =2;//赞成（true）还是反对（false）
+	int32 VoteState   =3;//你的自定义字段，可能是记录投票的原因或当前状态
 }
 
-
+//发送快照请求
 message InstallSnapshotRequest  {
 	int32 LeaderId                 =1;
 	int32 Term                     =2;
-	int32 LastSnapShotIncludeIndex =3;
-	int32 LastSnapShotIncludeTerm  =4;
+	int32 LastSnapShotIncludeIndex =3;//这份快照包含了截止到哪一行的账本信息
+	int32 LastSnapShotIncludeTerm  =4;//这份快照包含的最后一条账本的任期
 	bytes Data                     =5;//快照信息，当然是用bytes来传递
 }
 
@@ -62,9 +61,14 @@ message InstallSnapshotResponse  {
 }
 //只有raft节点之间才会涉及rpc通信
 service raftRpc  
-{
+{   //Leader 专属的权力， Leader 也会定期发送空的 AppendEntries。这相当于在喊：“我还活着，大家别选新王！”
     rpc AppendEntries(AppendEntriesArgs) returns(AppendEntriesReply);
+	/*如果有一个 Follower 掉线太久，或者新节点刚加入，它的进度落后 Leader 太多。
+	此时 Leader发现要补发的日志已经在自己的本地被删除了（变成了快照），
+	Leader 就会直接把整个“快照文件”发给 Follower。*/
     rpc InstallSnapshot (InstallSnapshotRequest) returns (InstallSnapshotResponse);
+	//当一个节点发现集群里没有 Leader（比如刚启动或者现有 Leader 挂了），
+	//它会把自己变成 Candidate (候选人)，然后向其他节点发送这个请求。
     rpc RequestVote (RequestVoteArgs) returns (RequestVoteReply);
 }
 // message ResultCode

@@ -46,7 +46,7 @@ class SchedulerTask {
 class Scheduler {
  public:
   typedef std::shared_ptr<Scheduler> ptr;
-
+  //use_caller就是主线程是否用于工作线程，也就是比如threads = 3，use_caller = false，那么就是直接创建三个子线程，如果use_caller = true，那么就是创建2个子线程
   Scheduler(size_t threads = 1, bool use_caller = true, const std::string &name = "Scheduler");
   virtual ~Scheduler();
   const std::string &getName() const { return name_; }
@@ -136,10 +136,11 @@ class Scheduler {
   std::atomic<size_t> idleThreadCnt_ = {0};
   // 是否是use caller
   bool isUseCaller_;
-  // use caller= true,调度器所在线程的调度协程
+  // 调度器   所在线程的调度协程
   Fiber::ptr rootFiber_;
-  // use caller = true,调度器协程所在线程的id
+  // 初始创建调度器的线程的id
   int rootThread_ = 0;
+  //isStopped_是收到停止指令，准备开始打烊
   bool isStopped_ = false;
 };
 }  // namespace monsoon

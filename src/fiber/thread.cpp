@@ -27,8 +27,7 @@ void *Thread::run(void *arg) {
   pthread_setname_np(pthread_self(), thread->name_.substr(0, 15).c_str());
   std::function<void()> cb;
   cb.swap(thread->cb_);
-  // 启动回调函数
-  // std::cout << "begin callback " << std::endl;
+  //上面的代码都是给Thread初始化擦屁股使用的
   cb();
   return 0;
 }

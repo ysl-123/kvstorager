@@ -24,6 +24,7 @@ class FriendService : public fixbug::FiendServiceRpc {
   void GetFriendsList(::google::protobuf::RpcController *controller, const ::fixbug::GetFriendsListRequest *request,
                       ::fixbug::GetFriendsListResponse *response, ::google::protobuf::Closure *done) {
     uint32_t userid = request->userid();
+    //这里不是就调用所谓的上面的方法吗
     std::vector<std::string> friendsList = GetFriendsList(userid);
     response->mutable_result()->set_errcode(0);
     response->mutable_result()->set_errmsg("");
@@ -31,6 +32,7 @@ class FriendService : public fixbug::FiendServiceRpc {
       std::string *p = response->add_friends();
       *p = name;
     }
+    //就会主动执行将运行结果response发回给客户端
     done->Run();
   }
 };
@@ -38,9 +40,10 @@ class FriendService : public fixbug::FiendServiceRpc {
 int main(int argc, char **argv) {
   std::string ip = "127.0.0.1";
   short port = 7788;
-  auto stub = new fixbug::FiendServiceRpc_Stub(new MprpcChannel(ip, port, false));
+  // （我也不知道他写这行是干什么的，明明这是属于客户端的代码吧） auto stub = new fixbug::FiendServiceRpc_Stub(new MprpcChannel(ip, port, false));
   // provider是一个rpc网络服务对象。把UserService对象发布到rpc节点上
   RpcProvider provider;
+  //这个就是将当前的FriendService里提供的方法发布出去，整体provider就知道了呢
   provider.NotifyService(new FriendService());
 
   // 启动一个rpc服务发布节点   Run以后，进程进入阻塞状态，等待远程的rpc调用请求

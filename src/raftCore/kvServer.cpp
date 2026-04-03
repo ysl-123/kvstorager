@@ -373,78 +373,128 @@ void KvServer::Get(google::protobuf::RpcController *controller, const ::raftKVRp
   KvServer::Get(request, response);
   done->Run();
 }
+//  int me 我的 ID |  int maxraftstate 最大的 Raft 状态（底层日志）大小限制 
+//| nodeInforFileName  节点信息文件名（就是configFileName即 nodes.conf）
+KvServer::KvServer(int me, int maxraftstate, std::string nodeInforFileName, short port) 
+    : m_skipList(6) { // 1. 初始化底层的 KV 存储结构（这里用的是跳表 SkipList）
 
-KvServer::KvServer(int me, int maxraftstate, std::string nodeInforFileName, short port) : m_skipList(6) {
+  // 创建持久化对象，用于把 Raft 的日志和状态写到磁盘上，防止宕机丢失
   std::shared_ptr<Persister> persister = std::make_shared<Persister>(me);
 
-  m_me = me;
-  m_maxRaftState = maxraftstate;
+  m_me = me;                       // 当前节点的 ID（比如 0, 1, 2）
+  m_maxRaftState = maxraftstate;   // Raft 日志大小阈值，超过这个大小就要打快照(Snapshot)压缩了
 
+  // 极其关键的通信管道！
+  // Raft 底层模块达成共识后，会把要执行的命令（比如 Put x=1）塞进这个队列。
+  // KvServer 上层会不停地从这个队列里取命令，并真正写进跳表里。
   applyChan = std::make_shared<LockQueue<ApplyMsg> >();
 
+  // 创建底层的 Raft 核心共识算法模块
   m_raftNode = std::make_shared<Raft>();
-  ////////////////clerk层面 kvserver开启rpc接受功能
-  //    同时raft与raft节点之间也要开启rpc功能，因此有两个注册
+
+  // =======================================================================
+  // 第一步：【开门迎客】 启动本地的 RPC 服务器（作为 Server，接受别人的请求）
+  // =======================================================================
+  
+  // 开一个后台线程去启动 RPC 服务，因为 provider.Run() 是个死循环，会阻塞当前主线程。
   std::thread t([this, port]() -> void {
-    // provider是一个rpc网络服务对象。把UserService对象发布到rpc节点上
     RpcProvider provider;
+    
+    // 向网络框架注册自己能处理哪些 RPC 请求：
+    // 1. 注册 KvServer 自己：处理来自外部客户端(Clerk)的 Get/Put 请求 (kvServerRPC.proto)
     provider.NotifyService(this);
-    provider.NotifyService(
-        this->m_raftNode.get());  // todo：这里获取了原始指针，后面检查一下有没有泄露的问题 或者 shareptr释放的问题
-    // 启动一个rpc服务发布节点   Run以后，进程进入阻塞状态，等待远程的rpc调用请求
+    
+    // 2. 注册底层的 Raft 节点：处理来自其他兄弟节点的拉票、心跳请求 (raftRPC.proto)
+    provider.NotifyService(this->m_raftNode.get()); 
+    // 作者的 todo 说明：这里用 .get() 传了原始指针。因为 provider 的生命周期在这个进程里是全局的，
+    // 而 KvServer/Raft 也是伴随整个进程的，所以理论上这里不会有内存泄漏或悬垂指针的问题。
+
+    // 开始在指定的端口上监听，等待外部网络请求打进来
     provider.Run(m_me, port);
   });
-  t.detach();
+  t.detach(); // 把这个线程剥离出去，让它自己在后台默默运行
 
-  ////开启rpc远程调用能力，需要注意必须要保证所有节点都开启rpc接受功能之后才能开启rpc远程调用能力
-  ////这里使用睡眠来保证
+  // =======================================================================
+  // 第二步：【硬核等待】 等待集群里其他兄弟节点也都把 RPC 服务器启动起来
+  // =======================================================================
+  
+  // 为什么要 sleep？因为大家都是通过 main 函数里的 fork() 同时启动的。
+  // 如果我现在立刻去连接节点 1，可能节点 1 的 RPC 服务还没 Run 起来，连接就会失败。
+  // 所以简单粗暴地睡 6 秒，保证所有进程的 RPC 监听口都已经打开了。
   std::cout << "raftServer node:" << m_me << " start to sleep to wait all ohter raftnode start!!!!" << std::endl;
   sleep(6);
   std::cout << "raftServer node:" << m_me << " wake up!!!! start to connect other raftnode" << std::endl;
-  //获取所有raft节点ip、port ，并进行连接  ,要排除自己
+
+  // =======================================================================
+  // 第三步：【主动出击】 作为客户端，去连接其他所有兄弟节点的 RPC 接口
+  // =======================================================================
+  
   MprpcConfig config;
-  config.LoadConfigFile(nodeInforFileName.c_str());
+  config.LoadConfigFile(nodeInforFileName.c_str()); // 读取那个记录了所有人 IP 和端口的“通讯录”
   std::vector<std::pair<std::string, short> > ipPortVt;
+  
+  // 解析通讯录文件，把所有节点的 IP 和 Port 存到 ipPortVt 数组里
   for (int i = 0; i < INT_MAX - 1; ++i) {
     std::string node = "node" + std::to_string(i);
-
     std::string nodeIp = config.Load(node + "ip");
     std::string nodePortStr = config.Load(node + "port");
     if (nodeIp.empty()) {
-      break;
+      break; // 如果读不到东西了，说明节点解析完毕
     }
-    ipPortVt.emplace_back(nodeIp, atoi(nodePortStr.c_str()));  //沒有atos方法，可以考慮自己实现
+    ipPortVt.emplace_back(nodeIp, atoi(nodePortStr.c_str())); 
   }
-  std::vector<std::shared_ptr<RaftRpcUtil> > servers;
-  //进行连接
+
+  std::vector<std::shared_ptr<RaftRpcUtil> > servers; // 用来存所有兄弟节点的 RPC 客户端代理(Stub)
+
+  // 遍历所有节点的信息，建立连接
   for (int i = 0; i < ipPortVt.size(); ++i) {
     if (i == m_me) {
+      // 如果是自己，就塞个空指针占位，自己不需要通过网络调用自己的 RPC
       servers.push_back(nullptr);
       continue;
     }
     std::string otherNodeIp = ipPortVt[i].first;
     short otherNodePort = ipPortVt[i].second;
+    
+    // 生成一个连接对方的 RPC 代理对象 (Stub)
     auto *rpc = new RaftRpcUtil(otherNodeIp, otherNodePort);
     servers.push_back(std::shared_ptr<RaftRpcUtil>(rpc));
 
     std::cout << "node" << m_me << " 连接node" << i << "success!" << std::endl;
   }
-  sleep(ipPortVt.size() - me);  //等待所有节点相互连接成功，再启动raft
+  
+  // 这里是一个错峰启动的技巧。如果不加这个，所有节点可能同时开始选举，容易产生选举冲突。
+  sleep(ipPortVt.size() - me); 
+
+  // =======================================================================
+  // 第四步：【正式营业】 启动 Raft 算法，并恢复历史数据
+  // =======================================================================
+
+  // 把准备好的网络通信代理、持久化对象、应用管道 全部喂给 Raft 模块，Raft 正式开始运行！
   m_raftNode->init(servers, m_me, persister, applyChan);
-  // kv的server直接与raft通信，但kv不直接与raft通信，所以需要把ApplyMsg的chan传递下去用于通信，两者的persist也是共用的
 
-  //////////////////////////////////
+  // 下面这些可能是作者遗留的一些无用代码或者占位符（没有任何赋值动作）
+  // m_skipList;
+  // waitApplyCh;
+  // m_lastRequestId;
+  m_lastSnapShotRaftLogIndex = 0; 
 
-  // You may need initialization code here.
-  // m_kvDB; //kvdb初始化
-  m_skipList;
-  waitApplyCh;
-  m_lastRequestId;
-  m_lastSnapShotRaftLogIndex = 0;  // todo:感覺這個函數沒什麼用，不如直接調用raft節點中的snapshot值？？？
+  // 如果磁盘上有历史快照，就先读取快照，恢复跳表里的数据，防止重启后数据清零
   auto snapshot = persister->ReadSnapshot();
   if (!snapshot.empty()) {
     ReadSnapShotToInstall(snapshot);
   }
-  std::thread t2(&KvServer::ReadRaftApplyCommandLoop, this);  //马上向其他节点宣告自己就是leader
-  t2.join();  //由於ReadRaftApplyCommandLoop一直不會結束，达到一直卡在这的目的
+
+  // =======================================================================
+  // 第五步：【核心循环】 开启后台监工，应用状态机
+  // =======================================================================
+
+  // 开启一个专门的线程，执行 ReadRaftApplyCommandLoop
+  // 这个函数内部是一个 while(true) 的死循环，它会死死盯着第一步创建的 applyChan 队列。
+  // 一旦底层 Raft 说：“这条日志大家已经达成共识了！”，这个循环就会把日志取出来，真正写入 m_skipList 里。
+  std::thread t2(&KvServer::ReadRaftApplyCommandLoop, this); 
+  
+  // t2.join() 会让主线程卡死在这里，永远不退出（因为 t2 是个死循环）。
+  // 结合之前的 main 函数里的 fork() -> pause()，这就是让服务器进程一直在后台活着的终极手段。
+  t2.join(); 
 }

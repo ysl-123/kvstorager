@@ -5,7 +5,8 @@
 namespace monsoon {
 // 当前线程的调度器，同一调度器下的所有线程共享同一调度器实例 （线程级调度器）
 static thread_local Scheduler *cur_scheduler = nullptr;
-// 当前线程的调度协程，每个线程一个 (协程级调度器)
+// 当前线程的调度协程，每个线程一个 (协程级调度器)  
+//但是我猜调度器应该只有一个
 static thread_local Fiber *cur_scheduler_fiber = nullptr;
 
 const std::string LOG_HEAD = "[scheduler] ";
@@ -27,7 +28,7 @@ Scheduler::Scheduler(size_t threads, bool use_caller, const std::string &name) {
     CondPanic(GetThis() == nullptr, "GetThis err:cur scheduler is not nullptr");
     // 设置当前线程为调度器线程（caller thread）
     cur_scheduler = this;
-    // 初始化当前线程的调度协程 （该线程不会被调度器带哦都），调度结束后，返回主协程
+    //智能指针的reset就是清空以前指向的对象，会自动资源释放，然后指向我们新创建的，自动资源加1
     rootFiber_.reset(new Fiber(std::bind(&Scheduler::run, this), 0, false));
     std::cout << LOG_HEAD << "init caller thread's caller fiber success" << std::endl;
 
@@ -61,6 +62,7 @@ void Scheduler::start() {
     std::cout << "scheduler has stopped" << std::endl;
     return;
   }
+  //此时此刻threadpool应该是false的状态
   CondPanic(threadPool_.empty(), "thread pool is not empty");
   threadPool_.resize(threadCnt_);
   for (size_t i = 0; i < threadCnt_; i++) {
@@ -75,7 +77,7 @@ void Scheduler::run() {
   set_hook_enable(true);
   setThis();
   if (GetThreadId() != rootThread_) {
-    // 如果当前线程不是caller线程，则初始化该线程的调度协程
+    // 如果当前线程不是caller线程，其实所谓的caller线程就是最初创建调度器的线程，则初始化该线程的调度协程
     cur_scheduler_fiber = Fiber::GetThis().get();
   }
 
@@ -167,6 +169,7 @@ void Scheduler::stop() {
   if (stopping()) {
     return;
   }
+  //isStopped_的含义是收到停止指令，准备开始打烊
   isStopped_ = true;
 
   // stop指令只能由caller线程发起

@@ -11,8 +11,8 @@ void Persister::Save(const std::string raftstate, const std::string snapshot) {
   // 将raftstate和snapshot写入本地文件
   m_raftStateOutStream << raftstate;
   m_snapshotOutStream << snapshot;
-}
 
+}
 std::string Persister::ReadSnapshot() {
   std::lock_guard<std::mutex> lg(m_mtx);
   if (m_snapshotOutStream.is_open()) {
@@ -60,13 +60,16 @@ std::string Persister::ReadRaftState() {
 }
 
 Persister::Persister(const int me)
+//傻逼了，这个括号不是在构造函数里就是初始化的意思，里面放的就是字符串，所以赋值就可以 
     : m_raftStateFileName("raftstatePersist" + std::to_string(me) + ".txt"),
       m_snapshotFileName("snapshotPersist" + std::to_string(me) + ".txt"),
       m_raftStateSize(0) {
   /**
    * 检查文件状态并清空文件
    */
+  // rue 代表存储健康，false 代表底层坏了
   bool fileOpenFlag = true;
+  //等价于ofstream file(m_raftStateFileName)
   std::fstream file(m_raftStateFileName, std::ios::out | std::ios::trunc);
   if (file.is_open()) {
     file.close();

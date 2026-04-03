@@ -11,7 +11,6 @@
 #include "rpcprovider.h"
 
 int main(int argc, char **argv) {
-  // https://askubuntu.com/questions/754213/what-is-difference-between-localhost-address-127-0-0-1-and-127-0-1-1
   std::string ip = "127.0.1.1";
   short port = 7788;
 

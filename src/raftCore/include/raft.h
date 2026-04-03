@@ -20,8 +20,8 @@
 #include "raftRpcUtil.h"
 #include "util.h"
 /// @brief //////////// 网络状态表示  todo：可以在rpc中删除该字段，实际生产中是用不到的.
-constexpr int Disconnected =
-    0;  // 方便网络分区的时候debug，网络异常的时候为disconnected，只要网络正常就为AppNormal，防止matchIndex[]数组异常减小
+constexpr int Disconnected =0;
+// 方便网络分区的时候debug，网络异常的时候为disconnected，只要网络正常就为AppNormal，防止matchIndex[]数组异常减小
 constexpr int AppNormal = 1;
 
 ///////////////投票状态
@@ -31,11 +31,12 @@ constexpr int Voted = 1;   //本轮已经投过票了
 constexpr int Expire = 2;  //投票（消息、竞选者）过期
 constexpr int Normal = 3;
 
+//继承的raftrpc.proto文件生成的类raftRpc
 class Raft : public raftRpcProctoc::raftRpc {
  private:
   std::mutex m_mtx;
-  std::vector<std::shared_ptr<RaftRpcUtil>> m_peers;
-  std::shared_ptr<Persister> m_persister;
+  std::vector<std::shared_ptr<RaftRpcUtil>> m_peers;//存着集群里所有兄弟节点的网络通信句柄（用来发 RPC）
+  std::shared_ptr<Persister> m_persister;//用来把重要数据存进硬盘
   int m_me;
   int m_currentTerm;
   int m_votedFor;
@@ -48,15 +49,16 @@ class Raft : public raftRpcProctoc::raftRpc {
   std::vector<int>
       m_nextIndex;  // 这两个状态的下标1开始，因为通常commitIndex和lastApplied从0开始，应该是一个无效的index，因此下标从1开始
   std::vector<int> m_matchIndex;
+  //Candidate就是leader已死想要和其他candidate竞争  follwer就是跟着leader或者给candidate投票的
   enum Status { Follower, Candidate, Leader };
   // 身份
   Status m_status;
 
-  std::shared_ptr<LockQueue<ApplyMsg>> applyChan;  // client从这里取日志（2B），client与raft通信的接口
+  std::shared_ptr<LockQueue<ApplyMsg>> applyChan;  // kv数据库从这里取日志（2B），kv数据库与raft通信的接口
   // ApplyMsgQueue chan ApplyMsg // raft内部使用的chan，applyChan是用于和服务层交互，最后好像没用上
 
   // 选举超时
-
+  //重置选举计时器的时间
   std::chrono::_V2::system_clock::time_point m_lastResetElectionTime;
   // 心跳超时，用于leader
   std::chrono::_V2::system_clock::time_point m_lastResetHearBeatTime;
@@ -91,7 +93,7 @@ class Raft : public raftRpcProctoc::raftRpc {
   void leaderSendSnapShot(int server);
   void leaderUpdateCommitIndex();
   bool matchLog(int logIndex, int logTerm);
-  void persist();
+  void persist();//持久化
   void RequestVote(const raftRpcProctoc::RequestVoteArgs *args, raftRpcProctoc::RequestVoteReply *reply);
   bool UpToDate(int index, int term);
   int getLastLogIndex();

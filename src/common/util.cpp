@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <ctime>
 #include <iomanip>
-
+//不符合这个条件报错
 void myAssert(bool condition, std::string message) {
   if (!condition) {
     std::cerr << "Error: " << message << std::endl;

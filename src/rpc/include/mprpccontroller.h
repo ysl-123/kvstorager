@@ -2,6 +2,7 @@
 #include <google/protobuf/service.h>
 #include <string>
 
+//protobuf::RpcController这里提供的是纯虚函数我们必须要自己重新实现一下
 class MprpcController : public google::protobuf::RpcController {
  public:
   MprpcController();
