@@ -364,9 +364,6 @@ void Raft::doHeartBeat() {
       myAssert(m_nextIndex[i] >= 1, format("rf.nextIndex[%d] = {%d}", i, m_nextIndex[i]));
       //日志压缩加入后要判断是发送快照还是发送AE
       if (m_nextIndex[i] <= m_lastSnapshotIncludeIndex) {
-        //                        DPrintf("[func-ticker()-rf{%v}]rf.nextIndex[%v] {%v} <=
-        //                        rf.lastSnapshotIncludeIndex{%v},so leaderSendSnapShot", rf.me, i, rf.nextIndex[i],
-        //                        rf.lastSnapshotIncludeIndex)
         std::thread t(&Raft::leaderSendSnapShot, this, i);  // 创建新线程并执行b函数，并传递参数
         t.detach();
         continue;
@@ -374,6 +371,7 @@ void Raft::doHeartBeat() {
       //构造发送值
       int preLogIndex = -1;
       int PrevLogTerm = -1;
+      //给确认的日志赋值呗
       getPrevLogInfo(i, &preLogIndex, &PrevLogTerm);
       std::shared_ptr<raftRpcProctoc::AppendEntriesArgs> appendEntriesArgs =
           std::make_shared<raftRpcProctoc::AppendEntriesArgs>();
@@ -384,11 +382,13 @@ void Raft::doHeartBeat() {
       appendEntriesArgs->clear_entries();
       appendEntriesArgs->set_leadercommit(m_commitIndex);
       if (preLogIndex != m_lastSnapshotIncludeIndex) {
+        //不等于的话只需要去发送我们preLogIndex这个之后的就可以了
         for (int j = getSlicesIndexFromLogIndex(preLogIndex) + 1; j < m_logs.size(); ++j) {
           raftRpcProctoc::LogEntry* sendEntryPtr = appendEntriesArgs->add_entries();
           *sendEntryPtr = m_logs[j];  //=是可以点进去的，可以点进去看下protobuf如何重写这个的
         }
       } else {
+        //等于的话日志后面的就要全部发过去
         for (const auto& item : m_logs) {
           raftRpcProctoc::LogEntry* sendEntryPtr = appendEntriesArgs->add_entries();
           *sendEntryPtr = item;  //=是可以点进去的，可以点进去看下protobuf如何重写这个的
@@ -403,9 +403,9 @@ void Raft::doHeartBeat() {
       const std::shared_ptr<raftRpcProctoc::AppendEntriesReply> appendEntriesReply =
           std::make_shared<raftRpcProctoc::AppendEntriesReply>();
       appendEntriesReply->set_appstate(Disconnected);
-
+      //  appendNums依然是在当前服务器对appendNums进行操作
       std::thread t(&Raft::sendAppendEntries, this, i, appendEntriesArgs, appendEntriesReply,
-                    appendNums);  // 创建新线程并执行b函数，并传递参数
+                    appendNums);  
       t.detach();
     }
     m_lastResetHearBeatTime = now();  // leader发送心跳，就不是随机时间了
@@ -490,7 +490,6 @@ int Raft::getNewCommandIndex() {
   return lastLogIndex + 1;
 }
 
-// getPrevLogInfo
 // leader调用，传入：服务器index，传出：发送的AE的preLogIndex和PrevLogTerm
 void Raft::getPrevLogInfo(int server, int* preIndex, int* preTerm) {
   // logs长度为0返回0,0，不是0就根据nextIndex数组的数值返回
@@ -524,28 +523,31 @@ void Raft::pushMsgToKvServer(ApplyMsg msg) { applyChan->Push(msg); }
 void Raft::leaderHearBeatTicker() {
   while (true) {
     while (m_status != Leader) {
-      usleep(1000 * HeartBeatTimeout);
+      usleep(1000 * HeartBeatTimeout);//和sleep区别就是微秒而已
     }
     static std::atomic<int32_t> atomicCount = 0;
-
+    //别管后面的括号就理解为是创建了这两个变量吧
+    //还能睡的时间
     std::chrono::duration<signed long int, std::ratio<1, 1000000000>> suitableSleepTime{};
+    //现在醒来的时间
     std::chrono::system_clock::time_point wakeTime{};
+    //这都是对类的操作，可能内部写了重载+号
     {
       std::lock_guard<std::mutex> lock(m_mtx);
       wakeTime = now();
       suitableSleepTime = std::chrono::milliseconds(HeartBeatTimeout) + m_lastResetHearBeatTime - wakeTime;
     }
-
+   //如果算出来的‘剩余可睡眠时间’，大于 1 毫秒，那我就准备去睡了。
     if (std::chrono::duration<double, std::milli>(suitableSleepTime).count() > 1) {
       std::cout << atomicCount << "\033[1;35m leaderHearBeatTicker();函数设置睡眠时间为: "
-                << std::chrono::duration_cast<std::chrono::milliseconds>(suitableSleepTime).count() << " 毫秒\033[0m"
+                << std::chrono::duration_cast<std::chrono::milliseconds>(suitableSleepTime).count() 
+                << " 毫秒\033[0m"
                 << std::endl;
       // 获取当前时间点
       auto start = std::chrono::steady_clock::now();
 
       usleep(std::chrono::duration_cast<std::chrono::microseconds>(suitableSleepTime).count());
-      // std::this_thread::sleep_for(suitableSleepTime);
-
+    
       // 获取函数运行结束后的时间点
       auto end = std::chrono::steady_clock::now();
 
@@ -555,14 +557,12 @@ void Raft::leaderHearBeatTicker() {
       // 使用ANSI控制序列将输出颜色修改为紫色
       std::cout << atomicCount << "\033[1;35m leaderHearBeatTicker();函数实际睡眠时间为: " << duration.count()
                 << " 毫秒\033[0m" << std::endl;
-      ++atomicCount;
+      ++atomicCount;//就是第几次leaderHearBeatTicker()的作用而已
     }
-
+     //客户端此时发来其他存的请求，其他线程给follwer发了消息，就代表可以替代一次心跳
     if (std::chrono::duration<double, std::milli>(m_lastResetHearBeatTime - wakeTime).count() > 0) {
-      //睡眠的这段时间有重置定时器，没有超时，再次睡眠
       continue;
     }
-    // DPrintf("[func-Raft::doHeartBeat()-Leader: {%d}] Leader的心跳定时器触发了\n", m_me);
     doHeartBeat();
   }
 }

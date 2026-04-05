@@ -45,9 +45,8 @@ class Raft : public raftRpcProctoc::raftRpc {
   int m_commitIndex;
   int m_lastApplied;  // 已经汇报给状态机（上层应用）的log 的index
 
-  // 这两个状态是由服务器来维护，易失
   std::vector<int>
-      m_nextIndex;  // 这两个状态的下标1开始，因为通常commitIndex和lastApplied从0开始，应该是一个无效的index，因此下标从1开始
+      m_nextIndex;  // 下标一般从1开始 注意这里存的是节点的和他保持通信的那些其他节点的nextindex 
   std::vector<int> m_matchIndex;
   //Candidate就是leader已死想要和其他candidate竞争  follwer就是跟着leader或者给candidate投票的
   enum Status { Follower, Candidate, Leader };
@@ -60,7 +59,7 @@ class Raft : public raftRpcProctoc::raftRpc {
   // 选举超时
   //重置选举计时器的时间
   std::chrono::_V2::system_clock::time_point m_lastResetElectionTime;
-  // 心跳超时，用于leader
+  // 你上一次成功发送心跳的时间
   std::chrono::_V2::system_clock::time_point m_lastResetHearBeatTime;
 
   // 2D中用于传入快照点

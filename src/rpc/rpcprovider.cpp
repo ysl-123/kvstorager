@@ -40,37 +40,49 @@ void RpcProvider::NotifyService(google::protobuf::Service *service) {
 
 // 启动rpc服务节点，开始提供rpc远程网络调用服务
 void RpcProvider::Run(int nodeIndex, short port) {
-  //获取可用ip
-  char *ipC;
-  char hname[128];
-  struct hostent *hent;
+  // --- 第一部分：获取本机可用的 IP 地址 ---
+  char *ipC;           // 用于暂存转换后的字符串格式 IP
+  char hname[128];     // 存储主机名
+  struct hostent *hent;// 存储主机信息的结构体指针
+
+  // 1. 获取当前机器的主机名（比如 "DESKTOP-LFLKPMP"）
   gethostname(hname, sizeof(hname));
+
+  // 2. 根据主机名获取主机的详细信息（包括 IP 地址列表）
   hent = gethostbyname(hname);
+
+  // 3. 遍历该主机所有的 IP 地址列表
+  // h_addr_list 是一个数组，最后一位是 NULL
   for (int i = 0; hent->h_addr_list[i]; i++) {
-    ipC = inet_ntoa(*(struct in_addr *)(hent->h_addr_list[i]));  // IP地址
+    // inet_ntoa: 将网络字节序的二进制 IP 转换为人类可读的字符串（如 "192.168.1.10"）
+    //实际上这个循环最终  ipC 只会保留最后一个找到的地址。
+    ipC = inet_ntoa(*(struct in_addr *)(hent->h_addr_list[i])); 
   }
+  // 将最后一个找到的有效 IP 转换为 C++ 的 string 对象
   std::string ip = std::string(ipC);
-  //    // 获取端口
-  //    if(getReleasePort(port)) //在port的基础上获取一个可用的port，不知道为何没有效果
-  //    {
-  //        std::cout << "可用的端口号为：" << port << std::endl;
-  //    }
-  //    else
-  //    {
-  //        std::cout << "获取可用端口号失败！" << std::endl;
-  //    }
-  //写入文件 "test.conf"
+ 
+  // --- 第二部分：将配置信息写入文件 ---
+  
+  // 拼接节点名称，例如：nodeIndex 为 1，则 node 为 "node1"
   std::string node = "node" + std::to_string(nodeIndex);
+  
   std::ofstream outfile;
-  outfile.open("test.conf", std::ios::app);  //打开文件并追加写入
+  // 以“追加模式”(std::ios::app) 打开 test.conf，如果文件不存在则创建
+  outfile.open("test.conf", std::ios::app); 
+
+  // 检查文件是否成功打开（防止权限问题或磁盘满）
   if (!outfile.is_open()) {
     std::cout << "打开文件失败！" << std::endl;
-    exit(EXIT_FAILURE);
+    exit(EXIT_FAILURE); // 严重错误，直接退出程序
   }
-  outfile << node + "ip=" + ip << std::endl;
-  outfile << node + "port=" + std::to_string(port) << std::endl;
-  outfile.close();
 
+  // 写入格式：node1ip=192.168.1.10
+  outfile << node + "ip=" + ip << std::endl;
+  // 写入格式：node1port=8080
+  outfile << node + "port=" + std::to_string(port) << std::endl;
+
+  // 关闭文件句柄，确保数据真正写入磁盘
+  outfile.close();
   //创建服务器
   muduo::net::InetAddress address(ip, port);
 

@@ -11,6 +11,7 @@
 // 对于一个raft节点来说，对于任意其他的节点都要维护一个rpc连接，即MprpcChannel
 class RaftRpcUtil {
  private:
+ //这里只是定义了指针实际上构造函数初始化的时候会给他进行传参的，里面就会有mprpcchannel的 
   raftRpcProctoc::raftRpc_Stub *stub_;
 
  public:

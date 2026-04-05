@@ -8,9 +8,10 @@
 const bool Debug = true;
 
 const int debugMul = 1;  // 时间单位：time.Millisecond，不同网络环境rpc速度不同，因此需要乘以一个系数
+//Raft 规定的心跳间隔
 const int HeartBeatTimeout = 25 * debugMul;  // 心跳时间一般要比选举超时小一个数量级
 const int ApplyInterval = 10 * debugMul;     //
-
+ 
 const int minRandomizedElectionTime = 300 * debugMul;  // ms
 const int maxRandomizedElectionTime = 500 * debugMul;  // ms
 
