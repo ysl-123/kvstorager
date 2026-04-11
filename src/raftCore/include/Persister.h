@@ -22,7 +22,6 @@ class Persister {
   /**
    * 保存raftState的输出流
    */
-  //栈上无参构造
   std::ofstream m_raftStateOutStream;
   /**
    * 保存snapshot的输出流

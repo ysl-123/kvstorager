@@ -18,7 +18,7 @@ std::string Persister::ReadSnapshot() {
   if (m_snapshotOutStream.is_open()) {
     m_snapshotOutStream.close();
   }
-
+  //读取完这个文件之后，清空文件（无论正常退出还是异常退出都会执行这一句）而且快照只需要保持一份，所以读取完情况，方便下一次别人往里面写快照
   DEFER {
     m_snapshotOutStream.open(m_snapshotFileName);  //默认是追加
   };

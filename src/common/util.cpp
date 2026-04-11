@@ -11,9 +11,10 @@ void myAssert(bool condition, std::string message) {
     std::exit(EXIT_FAILURE);
   }
 }
-
+//实际上就是system_clock    代表的是真实的物理世界时间  也就是你电脑右下角显示的系统时间
 std::chrono::_V2::system_clock::time_point now() { return std::chrono::high_resolution_clock::now(); }
-
+//生成一个随机的选举超时时间
+//很巧妙，防止选票瓜分，假如leader宕机了，5个follwer超时时间相同，同时超时，都投给自己，导致选票一直没办法超过一半，整个集群直接死了
 std::chrono::milliseconds getRandomizedElectionTimeout() {
   std::random_device rd;
   std::mt19937 rng(rd());

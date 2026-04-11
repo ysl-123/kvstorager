@@ -44,7 +44,7 @@ class Raft : public raftRpcProctoc::raftRpc {
                                                  // 这两个状态所有结点都在维护，易失
   int m_commitIndex;
   int m_lastApplied;  // 已经汇报给状态机（上层应用）的log 的index
-
+  //m_nextIndex 就是 Leader 认为“我下一次应该从哪个地方开始给你发货”的那个下标。
   std::vector<int>
       m_nextIndex;  // 下标一般从1开始 注意这里存的是节点的和他保持通信的那些其他节点的nextindex 
   std::vector<int> m_matchIndex;
@@ -57,7 +57,7 @@ class Raft : public raftRpcProctoc::raftRpc {
   // ApplyMsgQueue chan ApplyMsg // raft内部使用的chan，applyChan是用于和服务层交互，最后好像没用上
 
   // 选举超时
-  //重置选举计时器的时间
+  //上一次重置选举计时器的时间（是时刻，不是时间范围）
   std::chrono::_V2::system_clock::time_point m_lastResetElectionTime;
   // 你上一次成功发送心跳的时间
   std::chrono::_V2::system_clock::time_point m_lastResetHearBeatTime;

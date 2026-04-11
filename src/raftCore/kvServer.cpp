@@ -390,6 +390,7 @@ KvServer::KvServer(int me, int maxraftstate, std::string nodeInforFileName, shor
   applyChan = std::make_shared<LockQueue<ApplyMsg> >();
 
   // 创建底层的 Raft 核心共识算法模块
+  //创建本地的raft
   m_raftNode = std::make_shared<Raft>();
 
   // =======================================================================
@@ -457,6 +458,7 @@ KvServer::KvServer(int me, int maxraftstate, std::string nodeInforFileName, shor
     short otherNodePort = ipPortVt[i].second;
     
     // 生成一个连接对方的 RPC 代理对象 (Stub)
+    //可能就是有一个文件里面写了所有节点的ip+port，所以就可以直接用 
     auto *rpc = new RaftRpcUtil(otherNodeIp, otherNodePort);
     servers.push_back(std::shared_ptr<RaftRpcUtil>(rpc));
 
@@ -471,6 +473,7 @@ KvServer::KvServer(int me, int maxraftstate, std::string nodeInforFileName, shor
   // =======================================================================
 
   // 把准备好的网络通信代理、持久化对象、应用管道 全部喂给 Raft 模块，Raft 正式开始运行！
+  //初始化本地的raft
   m_raftNode->init(servers, m_me, persister, applyChan);
 
   // 下面这些可能是作者遗留的一些无用代码或者占位符（没有任何赋值动作）

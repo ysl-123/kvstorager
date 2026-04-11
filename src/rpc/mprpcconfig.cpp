@@ -3,7 +3,9 @@
 #include <iostream>
 #include <string>
 
-// 负责解析加载配置文件
+//   负责解析加载配置文件
+//   node0ip=127.0.1.1    node0port=29016
+  
 void MprpcConfig::LoadConfigFile(const char *config_file) {
   FILE *pf = fopen(config_file, "r");
   if (nullptr == pf) {
@@ -34,10 +36,11 @@ void MprpcConfig::LoadConfigFile(const char *config_file) {
 
     std::string key;
     std::string value;
+    //key就是node0ip  
     key = read_buf.substr(0, idx);
     Trim(key);
-    // rpcserverip=127.0.0.1\n
     int endidx = read_buf.find('\n', idx);
+    //value就是127.0.1.1 
     value = read_buf.substr(idx + 1, endidx - idx - 1);
     Trim(value);
     m_configMap.insert({key, value});

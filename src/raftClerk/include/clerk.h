@@ -19,8 +19,8 @@ class Clerk {
  private:
   std::vector<std::shared_ptr<raftServerRpcUtil>>
       m_servers;  //保存所有raft节点的fd //todo：全部初始化为-1，表示没有连接上
-  std::string m_clientId;
-  int m_requestId;
+  std::string m_clientId;//自己的客户端id，但是不同服务器之间应该互相看不到吧，也许  通过同步算法吗
+  int m_requestId;  //第几次请求
   int m_recentLeaderId;  //只是有可能是领导
 
   std::string Uuid() {

@@ -1,6 +1,4 @@
-//
-// Created by swx on 23-12-28.
-//
+
 #include <iostream>
 #include "raft.h"
 // #include "kvServer.h"

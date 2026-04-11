@@ -86,15 +86,7 @@ void RpcProvider::Run(int nodeIndex, short port) {
   //创建服务器
   muduo::net::InetAddress address(ip, port);
 
-  // 创建TcpServer对象
   m_muduo_server = std::make_shared<muduo::net::TcpServer>(&m_eventLoop, address, "RpcProvider");
-
-  // 绑定连接回调和消息读写回调方法  分离了网络代码和业务代码
-  /*
-  bind的作用：
-  如果不使用std::bind将回调函数和TcpConnection对象绑定起来，那么在回调函数中就无法直接访问和修改TcpConnection对象的状态。因为回调函数是作为一个独立的函数被调用的，它没有当前对象的上下文信息（即this指针），也就无法直接访问当前对象的状态。
-  如果要在回调函数中访问和修改TcpConnection对象的状态，需要通过参数的形式将当前对象的指针传递进去，并且保证回调函数在当前对象的上下文环境中被调用。这种方式比较复杂，容易出错，也不便于代码的编写和维护。因此，使用std::bind将回调函数和TcpConnection对象绑定起来，可以更加方便、直观地访问和修改对象的状态，同时也可以避免一些常见的错误。
-  */
   m_muduo_server->setConnectionCallback(std::bind(&RpcProvider::OnConnection, this, std::placeholders::_1));
   m_muduo_server->setMessageCallback(
       std::bind(&RpcProvider::OnMessage, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -108,15 +100,6 @@ void RpcProvider::Run(int nodeIndex, short port) {
   // 启动网络服务
   m_muduo_server->start();
   m_eventLoop.loop();
-  /*
-  这段代码是在启动网络服务和事件循环，其中server是一个TcpServer对象，m_eventLoop是一个EventLoop对象。
-
-首先调用server.start()函数启动网络服务。在Muduo库中，TcpServer类封装了底层网络操作，包括TCP连接的建立和关闭、接收客户端数据、发送数据给客户端等等。通过调用TcpServer对象的start函数，可以启动底层网络服务并监听客户端连接的到来。
-
-接下来调用m_eventLoop.loop()函数启动事件循环。在Muduo库中，EventLoop类封装了事件循环的核心逻辑，包括定时器、IO事件、信号等等。通过调用EventLoop对象的loop函数，可以启动事件循环，等待事件的到来并处理事件。
-
-在这段代码中，首先启动网络服务，然后进入事件循环阶段，等待并处理各种事件。网络服务和事件循环是两个相对独立的模块，它们的启动顺序和调用方式都是确定的。启动网络服务通常是在事件循环之前，因为网络服务是事件循环的基础。启动事件循环则是整个应用程序的核心，所有的事件都在事件循环中被处理。
-  */
 }
 
 // 新的socket连接回调
@@ -186,15 +169,6 @@ void RpcProvider::OnMessage(const muduo::net::TcpConnectionPtr &conn, muduo::net
     return;
   }
 
-  // 打印调试信息
-  //    std::cout << "============================================" << std::endl;
-  //    std::cout << "header_size: " << header_size << std::endl;
-  //    std::cout << "rpc_header_str: " << rpc_header_str << std::endl;
-  //    std::cout << "service_name: " << service_name << std::endl;
-  //    std::cout << "method_name: " << method_name << std::endl;
-  //    std::cout << "args_str: " << args_str << std::endl;
-  //    std::cout << "============================================" << std::endl;
-
   // 获取service对象和method对象
   auto it = m_serviceMap.find(service_name);
   if (it == m_serviceMap.end()) {
@@ -230,32 +204,27 @@ void RpcProvider::OnMessage(const muduo::net::TcpConnectionPtr &conn, muduo::net
       google::protobuf::NewCallback<RpcProvider, const muduo::net::TcpConnectionPtr &, google::protobuf::Message *>(
           this, &RpcProvider::SendRpcResponse, conn, response);
 
-  // 在框架上根据远端rpc请求，调用当前rpc节点上发布的方法
-  // new UserService().Login(controller, request, response, done)
-
+  //服务端调用的一般是自动生成的那个callmethod，客户端才是调用的是mprpcchanenl重写的callmethod方法
   /*
- void FiendServiceRpc::CallMethod(const ::PROTOBUF_NAMESPACE_ID::MethodDescriptor* method,
+}void raftRpc::CallMethod(const ::PROTOBUF_NAMESPACE_ID::MethodDescriptor* method,
                              ::PROTOBUF_NAMESPACE_ID::RpcController* controller,
                              const ::PROTOBUF_NAMESPACE_ID::Message* request,
                              ::PROTOBUF_NAMESPACE_ID::Message* response,
                              ::google::protobuf::Closure* done) {
-  GOOGLE_DCHECK_EQ(method->service(), file_level_service_descriptors_friend_2eproto[0]);
+  GOOGLE_DCHECK_EQ(method->service(), file_level_service_descriptors_raftRPC_2eproto[0]);
   switch(method->index()) {
     case 0:
-      GetFriendsList(controller,
-             ::PROTOBUF_NAMESPACE_ID::internal::DownCast<const ::fixbug::GetFriendsListRequest*>(
+      AppendEntries(controller,
+             ::PROTOBUF_NAMESPACE_ID::internal::DownCast<const ::raftRpcProctoc::AppendEntriesArgs*>(
                  request),
-             ::PROTOBUF_NAMESPACE_ID::internal::DownCast<::fixbug::GetFriendsListResponse*>(
+             ::PROTOBUF_NAMESPACE_ID::internal::DownCast<::raftRpcProctoc::AppendEntriesReply*>(
                  response),
              done);
       break;
-    default:
-      GOOGLE_LOG(FATAL) << "Bad method index; this should never happen.";
-      break;
-  }
 }
-  */
-  //根据上面一看，就可以知道下面的CallMethod就会主动调用方法了
+       AppendEntries不是我们重写的方法吗
+}*/ 
+//这里就是执行这个method和将response进行返回
   service->CallMethod(method, nullptr, request, response, done);
 }
 

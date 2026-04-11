@@ -82,7 +82,6 @@ void Clerk::Init(std::string configFileName) {
   std::vector<std::pair<std::string, short>> ipPortVt;
   for (int i = 0; i < INT_MAX - 1; ++i) {
     std::string node = "node" + std::to_string(i);
-
     std::string nodeIp = config.Load(node + "ip");
     std::string nodePortStr = config.Load(node + "port");
     if (nodeIp.empty()) {
@@ -94,7 +93,6 @@ void Clerk::Init(std::string configFileName) {
   for (const auto& item : ipPortVt) {
     std::string ip = item.first;
     short port = item.second;
-    // 2024-01-04 todo：bug fix
     auto* rpc = new raftServerRpcUtil(ip, port);
     m_servers.push_back(std::shared_ptr<raftServerRpcUtil>(rpc));
   }
