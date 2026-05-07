@@ -20,10 +20,11 @@ std::string Clerk::Get(std::string key) {
 
   while (true) {
     raftKVRpcProctoc::GetReply reply;
+    //发起rpc的get调用
     bool ok = m_servers[server]->Get(&args, &reply);
-    if (!ok ||
-        reply.err() ==
-            ErrWrongLeader) {  //会一直重试，因为requestId没有改变，因此可能会因为RPC的丢失或者其他情况导致重试，kvserver层来保证不重复执行（线性一致性）
+    if (!ok ||reply.err() ==ErrWrongLeader) {  
+//会一直重试，因为requestId没有改变，因此可能会因为RPC的丢失或者其他情况导致重试，kvserver层来保证不重复执行（线性一致性）
+//这里就是你调用了随机的一个raft节点提供的get，但是当前节点如果发现自己不是leader就会返回，你自己继续遍历就可以找到
       server = (server + 1) % m_servers.size();
       continue;
     }
@@ -37,7 +38,8 @@ std::string Clerk::Get(std::string key) {
   }
   return "";
 }
-
+//每一次操作最坏的情况发送节点个数次，会不会性能很差呢，
+//其实不会，因为每次找到，就会通过m_recentLeaderId去存储当前的，下一次只要节点没有变化刚去发就会成功
 void Clerk::PutAppend(std::string key, std::string value, std::string op) {
   // You will have to modify this function.
   m_requestId++;
@@ -51,6 +53,7 @@ void Clerk::PutAppend(std::string key, std::string value, std::string op) {
     args.set_clientid(m_clientId);
     args.set_requestid(requestId);
     raftKVRpcProctoc::PutAppendReply reply;
+    //这里就是对每一个raft节点都进行发送，直到遇到所谓的leader节点
     bool ok = m_servers[server]->PutAppend(&args, &reply);
     if (!ok || reply.err() == ErrWrongLeader) {
       DPrintf("【Clerk::PutAppend】原以为的leader：{%d}请求失败，向新leader{%d}重试  ，操作：{%s}", server, server + 1,
@@ -79,6 +82,7 @@ void Clerk::Init(std::string configFileName) {
   //获取所有raft节点ip、port ，并进行连接
   MprpcConfig config;
   config.LoadConfigFile(configFileName.c_str());
+  //存储所有raft节点的ip+port
   std::vector<std::pair<std::string, short>> ipPortVt;
   for (int i = 0; i < INT_MAX - 1; ++i) {
     std::string node = "node" + std::to_string(i);

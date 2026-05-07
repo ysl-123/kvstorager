@@ -17,12 +17,11 @@ void Raft::AppendEntries1(const raftRpcProctoc::AppendEntriesArgs* args, raftRpc
   reply->set_appstate(AppNormal);  // 能接收到代表网络是正常的
   //	不同的人收到AppendEntries的反应是不同的，要注意无论什么时候收到rpc请求和响应都要检查term
   //  比如leader宕机了，选了一个新leader，旧leader又恢复了，发消息去了
-  // 1.
   if (args->term() < m_currentTerm) {
     reply->set_success(false);
     // 这里设置reply里term为自己，是为了让leader知道自己是比较小的，就会主动放弃自己leader身份，成为follwer
     reply->set_term(m_currentTerm);
-    reply->set_updatenextindex(-100);  // 论文中：让领导人可以及时更新自己
+    reply->set_updatenextindex(-100);  
     DPrintf("[func-AppendEntries-rf{%d}] 拒绝了 因为Leader{%d}的term{%v}< rf{%d}.term{%d}\n", m_me, args->leaderid(),
             args->term(), m_me, m_currentTerm);
     return;  // 注意从过期的领导人收到消息不要重设定时器
@@ -50,7 +49,6 @@ void Raft::AppendEntries1(const raftRpcProctoc::AppendEntriesArgs* args, raftRpc
   m_status = Follower;
   // term相等
   m_lastResetElectionTime = now();
-  //  DPrintf("[	AppendEntries-func-rf(%v)		] 重置了选举超时定时器\n", rf.me);
 
   // 不能无脑的从prevlogIndex开始阶段日志，因为rpc可能会延迟，导致发过来的log是很久之前的
 
@@ -83,6 +81,9 @@ void Raft::AppendEntries1(const raftRpcProctoc::AppendEntriesArgs* args, raftRpc
         if (m_logs[getSlicesIndexFromLogIndex(log.logindex())].logterm() == log.logterm() &&
             m_logs[getSlicesIndexFromLogIndex(log.logindex())].command() != log.command()) {
           // 相同位置的log ，其logTerm相等，但是命令却不相同，不符合raft的前向匹配，异常了！
+          //因为一个任期（Term）内最多只能选出一个 Leader。这个 Leader 在给定的 Index 位置只会写下一条日志，写完就递增 Index。
+          //Term + Index 就像是数据库里的复合主键，全球唯一确定一条具体的命令
+          //这种情况根本不可能出现，出现系统直接死，代表系统有问题
           myAssert(false, format("[func-AppendEntries-rf{%d}] 两节点logIndex{%d}和term{%d}相同，但是其command{%d:%d}   "
                                  " {%d:%d}却不同！！\n",
                                  m_me, log.logindex(), log.logterm(), m_me,
@@ -104,11 +105,9 @@ void Raft::AppendEntries1(const raftRpcProctoc::AppendEntriesArgs* args, raftRpc
         format("[func-AppendEntries1-rf{%d}]rf.getLastLogIndex(){%d} != args.PrevLogIndex{%d}+len(args.Entries){%d}",
                m_me, getLastLogIndex(), args->prevlogindex(), args->entries_size()));
     if (args->leadercommit() > m_commitIndex) {
-      m_commitIndex = std::min(args->leadercommit(), getLastLogIndex());
-      // 这个地方不能无脑跟上getLastLogIndex()，因为可能存在args->leadercommit()落后于 getLastLogIndex()的情况
-    }
+      //getLastLogIndex()小于args->leadercommit()  我没想出任何情况属于这个后期删除试试
+      m_commitIndex = std::min(args->leadercommit(), getLastLogIndex());    }
 
-    // 领导会一次发送完所有的日志
     myAssert(getLastLogIndex() >= m_commitIndex,
              format("[func-AppendEntries1-rf{%d}]  rf.getLastLogIndex{%d} < rf.commitIndex{%d}", m_me,
                     getLastLogIndex(), m_commitIndex));
@@ -122,7 +121,7 @@ void Raft::AppendEntries1(const raftRpcProctoc::AppendEntriesArgs* args, raftRpc
     reply->set_updatenextindex(args->prevlogindex());
        
     for (int index = args->prevlogindex(); index >= m_lastSnapshotIncludeIndex; --index) {
-      //直到找到两者任期相同，返回给leader告诉直接从这里进行匹配就行
+      //直到找到两者任期相同，返回给leader告诉直接从这里进行匹配就行，最差的情况就是直接回退到快照点，快照点绝对是和他term是一样的。
       if (getLogTermFromLogIndex(index) != getLogTermFromLogIndex(args->prevlogindex())) {
         reply->set_updatenextindex(index + 1);
         break;
@@ -143,7 +142,7 @@ void Raft::InstallSnapshot(google::protobuf::RpcController* controller,
 
   done->Run();
 }
-
+//实际上follwer执行，因为leader发现自己存的当前节点的m_nextindex[i]如果小于自己快照的最后一位就要直接发快照，目的是让follwer去下载leader的快照
 void Raft::InstallSnapshot(const raftRpcProctoc::InstallSnapshotRequest* args,
                            raftRpcProctoc::InstallSnapshotResponse* reply) {
   m_mtx.lock();
@@ -178,6 +177,7 @@ void Raft::InstallSnapshot(const raftRpcProctoc::InstallSnapshotRequest* args,
   if (lastLogIndex > args->lastsnapshotincludeindex()) {
     // 动作：把前 100 条日志从数组里“撕掉”（erase），只保留 101~120 条！
     // getSlicesIndexFromLogIndex() 是算出第 100 条日志在数组里的真实下标。
+    //其实0--100条的日志并不是就接收了，但是只要跟快照一样就没事，但是101--120的并没有接收后期还要继续比对
     m_logs.erase(m_logs.begin(), m_logs.begin() + getSlicesIndexFromLogIndex(args->lastsnapshotincludeindex()) + 1);
   } else {
     // 如果我本地的最新日志，比快照包含的进度还要短
@@ -195,6 +195,8 @@ void Raft::InstallSnapshot(const raftRpcProctoc::InstallSnapshotRequest* args,
   msg.SnapshotTerm = args->lastsnapshotincludeterm();
   msg.SnapshotIndex = args->lastsnapshotincludeindex();
   // 可能是这个队列，线程访问多，害怕锁住，卡的时间长
+  //还是直接将快照放到了啊applychan的队列里，我记得前面raft::init函数里开辟了一个新线程专门将日志放到队列里
+  //但是现在直接将快照放进去我需要看看队列里的日志和快照如何区分开处理
   std::thread t(&Raft::pushMsgToKvServer, this, msg);  // 创建新线程并执行b函数，并传递参数
   t.detach();
   m_persister->Save(persistData(), args->data());
@@ -232,13 +234,9 @@ void Raft::RequestVote(const raftRpcProctoc::RequestVoteArgs* args, raftRpcProct
   //	现在节点任期都是相同的(任期小的也已经更新到新的args的term了)，还需要检查log的term和index是不是匹配的了
 
   int lastLogTerm = getLastLogTerm();
-  // 只有没投票，且candidate的日志的新的程度 ≥ 接受者的日志新的程度 才会授票
+  // args->lastlogindex() > lastTerm || (args->lastlogterm() == lastTerm && index >= lastIndex);
   if (!UpToDate(args->lastlogindex(), args->lastlogterm())) {
-    // args.LastLogTerm < lastLogTerm || (args.LastLogTerm == lastLogTerm && args.LastLogIndex < lastLogIndex) {
-    // 日志太旧了
-    if (args->lastlogterm() < lastLogTerm) {
-    } else {
-    }
+    
     reply->set_term(m_currentTerm);
     reply->set_votestate(Voted);
     reply->set_votegranted(false);
@@ -259,7 +257,7 @@ void Raft::RequestVote(const raftRpcProctoc::RequestVoteArgs* args, raftRpcProct
     return;
   }
 }
-// 每隔一段时间，去看（Raft）有没有新敲定的决议（Committed Logs），如果有，就打包拿出来，扔到（applyChan）
+// 每隔一段时间，去看（Raft）有没有新敲定的决议（Committed Logs），如果有，就打包拿出来放到applyMsgs，然后再扔到（applyChan）
 
 void Raft::applierTicker() {
   while (true) {
@@ -370,7 +368,7 @@ void Raft::doHeartBeat() {
       }
       DPrintf("[func-Raft::doHeartBeat()-Leader: {%d}] Leader的心跳定时器触发了 index:{%d}\n", m_me, i);
       myAssert(m_nextIndex[i] >= 1, format("rf.nextIndex[%d] = {%d}", i, m_nextIndex[i]));
-      // 日志压缩加入后要判断是发送快照还是发送AE
+      // 这个就是某个follwer的节点完全落后，回退到比leader的快照还小，所以就必须直接发送快照
       if (m_nextIndex[i] <= m_lastSnapshotIncludeIndex) {
         std::thread t(&Raft::leaderSendSnapShot, this, i);  // 创建新线程并执行b函数，并传递参数
         t.detach();
@@ -441,6 +439,7 @@ void Raft::electionTimeOutTicker() {
       m_mtx.unlock();
     }
     // 毫秒了  .count()就相当于取出里面的数了
+    // 比如 $< 1ms$），程序认为“马上就要超时了”，没必要再进入昂贵的睡眠状态。
     if (std::chrono::duration<double, std::milli>(suitableSleepTime).count() > 1) {
       // steady_clock只是当前服务器开始   服务器按电源开机的那一刻，它从 0 开始滴答滴答走
       auto start = std::chrono::steady_clock::now();
@@ -470,7 +469,7 @@ void Raft::electionTimeOutTicker() {
     doElection();
   }
 }
-
+//将所有已经commit的index全部取出来，放到applyMsgs中
 std::vector<ApplyMsg> Raft::getApplyLogs() {
   std::vector<ApplyMsg> applyMsgs;
   myAssert(m_commitIndex <= getLastLogIndex(), format("[func-getApplyLogs-rf{%d}] commitIndex{%d} >getLastLogIndex{%d}",
@@ -503,6 +502,7 @@ int Raft::getNewCommandIndex() {
 }
 
 // leader调用，传入：服务器index，传出：发送的AE的preLogIndex和PrevLogTerm
+//返回结果就是下一次需要同步的日志的前一位
 void Raft::getPrevLogInfo(int server, int* preIndex, int* preTerm) {
   // logs长度为0返回0,0，不是0就根据nextIndex数组的数值返回
   if (m_nextIndex[server] == m_lastSnapshotIncludeIndex + 1) {
@@ -516,8 +516,7 @@ void Raft::getPrevLogInfo(int server, int* preIndex, int* preTerm) {
   *preTerm = m_logs[getSlicesIndexFromLogIndex(*preIndex)].logterm();
 }
 
-// GetState return currentTerm and whether this server
-// believes it is the Leader.
+//返回当前的状态和任期
 void Raft::GetState(int* term, bool* isLeader) {
   m_mtx.lock();
   DEFER {
@@ -547,6 +546,7 @@ void Raft::leaderHearBeatTicker() {
     {
       std::lock_guard<std::mutex> lock(m_mtx);
       wakeTime = now();
+      //在这的话肯定是m_lastResetHearBeatTime肯定是小于=waketime，因为now刚发生，你的上一次接收消息最多就是now
       suitableSleepTime = std::chrono::milliseconds(HeartBeatTimeout) + m_lastResetHearBeatTime - wakeTime;
     }
     // 如果算出来的‘剩余可睡眠时间’，大于 1 毫秒，那我就准备去睡了。
@@ -610,8 +610,15 @@ void Raft::leaderSendSnapShot(int server) {
   if (m_status != Leader || m_currentTerm != args.term()) {
     return;  // 中间释放过锁，可能状态已经改变了
   }
+  //这是我抄袭sendAppendEntries的判断的，但是实际上前面的if判断已经排除了这种情况
+  //可能是发送完之后就突然不是leader了 ，所以term会比他大呢
+ if (reply.term() < m_currentTerm) {
+    DPrintf("[func -sendAppendEntries  rf{%d}]  节点：{%d}的term{%d}<rf{%d}的term{%d}\n", m_me, server, reply.term(),
+            m_me, m_currentTerm);
+    return ;
+  }
   //	无论什么时候都要判断term
-  if (reply.term() > m_currentTerm) {
+  else if (reply.term() > m_currentTerm) {
     // 三变
     m_currentTerm = reply.term();
     m_votedFor = -1;  // 任期比我大立刻放弃leader位置  但是当前票没投所以还是-1
@@ -731,6 +738,7 @@ int Raft::getLastLogTerm() {
  * @param logIndex log的逻辑index。注意区别于m_logs的物理index
  * @return
  */
+//  返回当前index所在的日志的term呗
 int Raft::getLogTermFromLogIndex(int logIndex) {
   myAssert(logIndex >= m_lastSnapshotIncludeIndex,
            format("[func-getSlicesIndexFromLogIndex-rf{%d}]  index{%d} < rf.lastSnapshotIncludeIndex{%d}", m_me,
@@ -802,7 +810,7 @@ bool Raft::sendRequestVote(int server, std::shared_ptr<raftRpcProctoc::RequestVo
     // 变成leader
     *votedNum = 0;
     if (m_status == Leader) {
-      // 如果已经是leader了，那么是就是了，不会进行下一步处理了k
+      //感觉纯扯淡，怎么可能是leader
       myAssert(false,
                format("[func-sendRequestVote-rf{%d}]  term:{%d} 同一个term当两次领导，error", m_me, m_currentTerm));
     }
@@ -860,13 +868,14 @@ bool Raft::sendAppendEntries(int server, std::shared_ptr<raftRpcProctoc::AppendE
     m_currentTerm = reply->term();
     m_votedFor = -1;
     return ok;
-  } else if (reply->term() < m_currentTerm) {
+  }//可能是发送完之后就突然不是leader了 ，所以term会比他大呢
+  else if (reply->term() < m_currentTerm) {
     DPrintf("[func -sendAppendEntries  rf{%d}]  节点：{%d}的term{%d}<rf{%d}的term{%d}\n", m_me, server, reply->term(),
             m_me, m_currentTerm);
     return ok;
   }
-
-  if (m_status != Leader) {
+  //后面的m_currentTerm != args->term()是我模仿下载快照写的，虽然前面的if排除掉这种情况
+  if (m_status != Leader|| m_currentTerm != args->term()) {
     // 如果不是leader，那么就不要对返回的情况进行处理了
     return ok;
   }
@@ -882,6 +891,7 @@ bool Raft::sendAppendEntries(int server, std::shared_ptr<raftRpcProctoc::AppendE
               server, reply->updatenextindex());
       m_nextIndex[server] = reply->updatenextindex();  // 失败是不更新mathIndex的
     }
+    //按理来说-100都走不到这里，因为-100情况是args->term() < m_currentTerm，前面回复term比leader大就直接排除
   } else {
     //   *appendNums当前已经成功追加这条日志的节点总数，因为当前这个收到了所以就需要加1
     *appendNums = *appendNums + 1;
@@ -910,7 +920,7 @@ bool Raft::sendAppendEntries(int server, std::shared_ptr<raftRpcProctoc::AppendE
             "---------------------------tmp------------------------- 當前term有log成功提交，更新leader的m_commitIndex "
             "from{%d} to{%d}",
             m_commitIndex, args->prevlogindex() + args->entries_size());
-
+        //此时只是commitindex动了并没有执行所谓的数据库操作呀
         m_commitIndex = std::max(m_commitIndex, args->prevlogindex() + args->entries_size());
       }
       myAssert(m_commitIndex <= lastLogIndex,
@@ -920,13 +930,10 @@ bool Raft::sendAppendEntries(int server, std::shared_ptr<raftRpcProctoc::AppendE
   }
   return ok;
 }
-
+// 实际上就是直接这条指令放到m_logs
 void Raft::Start(Op command, int* newLogIndex, int* newLogTerm, bool* isLeader) {
   std::lock_guard<std::mutex> lg1(m_mtx);
-  //    m_mtx.lock();
-  //    Defer ec1([this]()->void {
-  //       m_mtx.unlock();
-  //    });
+  //这个情况就是因为  客户端是给所有的指令都发呀
   if (m_status != Leader) {
     DPrintf("[func-Start-rf{%d}]  is not leader");
     *newLogIndex = -1;
@@ -975,7 +982,7 @@ void Raft::init(std::vector<std::shared_ptr<RaftRpcUtil>> peers, int me, std::sh
 
   // applier
   this->applyChan = applyCh;
-  //    rf.ApplyMsgQueue = make(chan ApplyMsg)
+  // rf.ApplyMsgQueue = make(chan ApplyMsg)
   m_currentTerm = 0;
   m_status = Follower;
   m_commitIndex = 0;
@@ -1012,7 +1019,7 @@ void Raft::init(std::vector<std::shared_ptr<RaftRpcUtil>> peers, int me, std::sh
   // electionTimeOutTicker执行时间是恒定的，applierTicker时间受到数据库响应延迟和两次apply之间请求数量的影响，这个随着数据量增多可能不太合理，最好其还是启用一个线程。
   m_ioManager->scheduler([this]() -> void { this->leaderHearBeatTicker(); });
   m_ioManager->scheduler([this]() -> void { this->electionTimeOutTicker(); });
-
+  //这里放的是我的日志里的一个操作放队列里
   std::thread t3(&Raft::applierTicker, this);
   t3.detach();
 
@@ -1098,14 +1105,15 @@ void Raft::Snapshot(int index, std::string snapshot) {
   int newLastSnapshotIncludeIndex = index;
   int newLastSnapshotIncludeTerm = m_logs[getSlicesIndexFromLogIndex(index)].logterm();
   std::vector<raftRpcProctoc::LogEntry> trunckedLogs;
-  // todo :这种写法有点笨，待改进，而且有内存泄漏的风险
+  // 为什么放index+1呢，在kv里弹出的message，我们执行这个之后，开始的制作快照，所以index及其之前的日志就可以扔掉了
   for (int i = index + 1; i <= getLastLogIndex(); i++) {
     // 注意有=，因为要拿到最后一个日志
     trunckedLogs.push_back(m_logs[getSlicesIndexFromLogIndex(i)]);
   }
   m_lastSnapshotIncludeIndex = newLastSnapshotIncludeIndex;
   m_lastSnapshotIncludeTerm = newLastSnapshotIncludeTerm;
-  m_logs = trunckedLogs;
+  m_logs = trunckedLogs;//将以前的日志全部清空，放index之后的
+  //当前能执行这个日志里的一条指令就意味着这条指令的index一定比m_commitIndex小于等于，因为我们是对小于等于的放入applychan里
   m_commitIndex = std::max(m_commitIndex, index);
   m_lastApplied = std::max(m_lastApplied, index);
 

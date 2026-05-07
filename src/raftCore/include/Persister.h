@@ -28,8 +28,7 @@ class Persister {
    */
   std::ofstream m_snapshotOutStream;
   /**
-   * 保存raftStateSize的大小
-   * 避免每次都读取文件来获取具体的大小
+   Raft 节点持久化状态在磁盘（或内存）中占用的实际字节数。
    */
   long long m_raftStateSize;
 

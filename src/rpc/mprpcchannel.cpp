@@ -23,6 +23,7 @@ void MprpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
     bool rt = newConnect(m_ip.c_str(), m_port, &errMsg);
     if (!rt) {
       DPrintf("[func-MprpcChannel::CallMethod]重连接ip：{%s} port{%d}失败", m_ip.c_str(), m_port);
+      //这个就会将controller里的failed（）设置为true
       controller->SetFailed(errMsg);
       return;
     } else {
@@ -82,7 +83,8 @@ void MprpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   //    std::cout << "============================================" << std::endl;
 
   // 发送rpc请求
-  //失败会重试连接再发送，重试连接失败会直接return
+  //失败会重试连接再发送，重试连接失败会直接return 
+  //-1的情况有两种呀 EAGAIN/EWOULDBLOCK  EINTIR 但这里是重新创建clientfd，重新发送确实可以
   while (-1 == send(m_clientFd, send_rpc_str.c_str(), send_rpc_str.size(), 0)) {
     char errtxt[512] = {0};
     sprintf(errtxt, "send error! errno:%d", errno);
@@ -103,6 +105,7 @@ void MprpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   // 接收rpc请求的响应值
   char recv_buf[1024] = {0};
   int recv_size = 0;
+  //这里应该全部是阻塞的，所以有些疑惑了，如果response发送的那里进程卡住了，我们不是要一致卡死等着
   if (-1 == (recv_size = recv(m_clientFd, recv_buf, 1024, 0))) {
     close(m_clientFd);
     m_clientFd = -1;
@@ -150,7 +153,7 @@ bool MprpcChannel::newConnect(const char* ip, uint16_t port, string* errMsg) {
   m_clientFd = clientfd;
   return true;
 }
-
+//应该是每一次调用的时候都会新创建一个连接吧
 MprpcChannel::MprpcChannel(string ip, short port, bool connectNow) : m_ip(ip), m_port(port), m_clientFd(-1) {
   // 使用tcp编程，完成rpc方法的远程调用，使用的是短连接，因此每次都要重新连接上去，待改成长连接。
   // 没有连接或者连接已经断开，那么就要重新连接呢,会一直不断地重试

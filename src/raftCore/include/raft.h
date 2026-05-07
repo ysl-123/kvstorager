@@ -42,8 +42,10 @@ class Raft : public raftRpcProctoc::raftRpc {
   int m_votedFor;
   std::vector<raftRpcProctoc::LogEntry> m_logs;  //// 日志条目数组，包含了状态机要执行的指令集，以及收到领导时的任期号
                                                  // 这两个状态所有结点都在维护，易失
-  int m_commitIndex;
+  int m_commitIndex;  //\超过半数的节点已经在这个上面和leader节点同步了
   int m_lastApplied;  // 已经汇报给状态机（上层应用）的log 的index
+
+  //Raft 进入稳定状态后，它们确实维持着 nextIndex = matchIndex + 1 的关系，但在领导者更替（选举刚结束）或网络波动时，这种平衡会被打破
   //m_nextIndex 就是 Leader 认为“我下一次应该从哪个地方开始给你发货”的那个下标。
   std::vector<int>
       m_nextIndex;  // 下标一般从1开始 注意这里存的是节点的和他保持通信的那些其他节点的nextindex 
@@ -89,7 +91,7 @@ class Raft : public raftRpcProctoc::raftRpc {
   void InstallSnapshot(const raftRpcProctoc::InstallSnapshotRequest *args,
                        raftRpcProctoc::InstallSnapshotResponse *reply);
   void leaderHearBeatTicker();
-  void leaderSendSnapShot(int server);
+ 
   void leaderUpdateCommitIndex();
   bool matchLog(int logIndex, int logTerm);
   void persist();//持久化
@@ -100,8 +102,10 @@ class Raft : public raftRpcProctoc::raftRpc {
   void getLastLogIndexAndTerm(int *lastLogIndex, int *lastLogTerm);
   int getLogTermFromLogIndex(int logIndex);
   int GetRaftStateSize();
+  //找到当前日志在数组中的下标位置，只有这一个是数组下标其他的全部是第几条日志
   int getSlicesIndexFromLogIndex(int logIndex);
-
+  
+  void leaderSendSnapShot(int server);
   bool sendRequestVote(int server, std::shared_ptr<raftRpcProctoc::RequestVoteArgs> args,
                        std::shared_ptr<raftRpcProctoc::RequestVoteReply> reply, std::shared_ptr<int> votedNum);
   bool sendAppendEntries(int server, std::shared_ptr<raftRpcProctoc::AppendEntriesArgs> args,

@@ -8,7 +8,7 @@
 #include <random>
 
 void ShowArgsHelp();
-
+//服务提供方
 int main(int argc, char **argv) {
   //  ./raftCoreRun -n 3 -f test.conf
   //   读取命令参数：节点数量、写入raft节点节点信息到哪个文件

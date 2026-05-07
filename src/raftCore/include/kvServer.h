@@ -27,18 +27,21 @@ class KvServer : raftKVRpcProctoc::kvServerRpc {
   std::mutex m_mtx;
   int m_me;
   std::shared_ptr<Raft> m_raftNode;
-  std::shared_ptr<LockQueue<ApplyMsg> > applyChan;  // kvServer和raft节点的通信管道
-  int m_maxRaftState;                               // snapshot if log grows this big
-
+  // Raft底层达成共识后，将日志放进去；KVServer的后台线程从里面拿出来，真正对数据库进行操作。
+  std::shared_ptr<LockQueue<ApplyMsg> > applyChan;  
+  // 设定一个“阈值”，用来控制 Raft 日志的大小，防止它无限膨胀撑爆磁盘或内存。 
+  //m_maxRaftState == -1：这意味着你不限制日志的大小，无论日志长到几个 GB 都不触发快照。这通常用于 测试环境
+  //m_maxRaftState != -1：这意味着快照功能 已开启。系统会根据你设置的具体数值（比如 1000 字节）来监控日志，一旦超标，就立刻“瘦身
+  int m_maxRaftState;   
   // Your definitions here.
   std::string m_serializedKVData;  // todo ： 序列化后的kv数据，理论上可以不用，但是目前没有找到特别好的替代方法
   SkipList<std::string, std::string> m_skipList;
-  std::unordered_map<std::string, std::string> m_kvDB;
-
+  std::unordered_map<std::string, std::string> m_kvDB;//没有实现
+  //实际上就是每一次请求比如get  put append就对应一个  waitApplyCh[logindex] 在raft服务方里提供的get put插入的，这个get结束就删除
   std::unordered_map<int, LockQueue<Op> *> waitApplyCh;
   // index(raft) -> chan  //？？？字段含义   waitApplyCh是一个map，键是int，值是Op类型的管道
 
-  std::unordered_map<std::string, int> m_lastRequestId;  // clientid -> requestID  //一个kV服务器可能连接多个client
+  std::unordered_map<std::string, int> m_lastRequestId;  //{clientid ， requestID}   //一个kV服务器可能连接多个client
 
   // last SnapShot point , raftIndex
   int m_lastSnapShotRaftLogIndex;
@@ -57,6 +60,9 @@ class KvServer : raftKVRpcProctoc::kvServerRpc {
   void ExecuteGetOpOnKVDB(Op op, std::string *value, bool *exist);
 
   void ExecutePutOpOnKVDB(Op op);
+  
+    // clerk 使用RPC远程调用
+  void PutAppend(const raftKVRpcProctoc::PutAppendArgs *args, raftKVRpcProctoc::PutAppendReply *reply);
 
   void Get(const raftKVRpcProctoc::GetArgs *args,
            raftKVRpcProctoc::GetReply
@@ -68,10 +74,6 @@ class KvServer : raftKVRpcProctoc::kvServerRpc {
   void GetCommandFromRaft(ApplyMsg message);
 
   bool ifRequestDuplicate(std::string ClientId, int RequestId);
-
-  // clerk 使用RPC远程调用
-  void PutAppend(const raftKVRpcProctoc::PutAppendArgs *args, raftKVRpcProctoc::PutAppendReply *reply);
-
   ////一直等待raft传来的applyCh
   void ReadRaftApplyCommandLoop();
 
@@ -115,6 +117,7 @@ class KvServer : raftKVRpcProctoc::kvServerRpc {
     m_serializedKVData = m_skipList.dump_file();
     std::stringstream ss;
     boost::archive::text_oarchive oa(ss);
+    //就是将kvserver里序列化void serialize里的东西全部输入进去
     oa << *this;
     m_serializedKVData.clear();
     return ss.str();

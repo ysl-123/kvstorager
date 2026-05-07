@@ -4,15 +4,21 @@
 #include <iostream>
 #include "clerk.h"
 #include "util.h"
+// 服务调用方
 int main() {
+  /*m_clientId(Uuid()), m_requestId(0), m_recentLeaderId(0)
+    std::string Uuid() {
+     return std::to_string(rand()) + std::to_string(rand()) + std::to_string(rand()) + std::to_string(rand());
+    }
+  */
   Clerk client;
   client.Init("test.conf");
   auto start = now();
   int count = 500;
   int tmp = count;
+  //可以看到就目前文件结构而言只会有一个client，然后他的m_requestId有很多的
   while (tmp--) {
     client.Put("x", std::to_string(tmp));
-
     std::string get1 = client.Get("x");
     std::printf("get return :{%s}\r\n", get1.c_str());
   }

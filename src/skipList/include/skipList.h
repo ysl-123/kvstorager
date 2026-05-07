@@ -221,7 +221,7 @@ int SkipList<K, V>::insert_element(const K key, const V value) {
 
     // If random level is greater thar skip list's current level, initialize update value with pointer to header
     if (random_level > _skip_list_level) {
-      for (int i = _skip_list_level + 1; i < =random_level; i++) {
+      for (int i = _skip_list_level + 1; i <=random_level; i++) {
         update[i] = _header;
       }
       _skip_list_level = random_level;

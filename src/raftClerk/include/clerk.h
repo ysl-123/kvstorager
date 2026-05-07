@@ -34,7 +34,8 @@ class Clerk {
   //对外暴露的三个功能和初始化
   void Init(std::string configFileName);
   std::string Get(std::string key);
-
+  
+  //Put和append底层调用的时候都是给PutAppend
   void Put(std::string key, std::string value);
   void Append(std::string key, std::string value);
 

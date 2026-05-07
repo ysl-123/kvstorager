@@ -19,6 +19,7 @@ std::string Persister::ReadSnapshot() {
     m_snapshotOutStream.close();
   }
   //读取完这个文件之后，清空文件（无论正常退出还是异常退出都会执行这一句）而且快照只需要保持一份，所以读取完情况，方便下一次别人往里面写快照
+  //不懂这人的脑回路
   DEFER {
     m_snapshotOutStream.open(m_snapshotFileName);  //默认是追加
   };
@@ -31,7 +32,7 @@ std::string Persister::ReadSnapshot() {
   ifs.close();
   return snapshot;
 }
-
+//不理解每次存储的时候一直清空，傻逼吧
 void Persister::SaveRaftState(const std::string &data) {
   std::lock_guard<std::mutex> lg(m_mtx);
   // 将raftstate和snapshot写入本地文件
@@ -69,7 +70,7 @@ Persister::Persister(const int me)
    */
   // rue 代表存储健康，false 代表底层坏了
   bool fileOpenFlag = true;
-  //等价于ofstream file(m_raftStateFileName)
+  //等价于ofstream file(m_raftStateFileName)  实际上打开关闭只是为了清空一下这个文件而已
   std::fstream file(m_raftStateFileName, std::ios::out | std::ios::trunc);
   if (file.is_open()) {
     file.close();
@@ -91,6 +92,7 @@ Persister::Persister(const int me)
   m_raftStateOutStream.open(m_raftStateFileName);
   m_snapshotOutStream.open(m_snapshotFileName);
 }
+
 
 Persister::~Persister() {
   if (m_raftStateOutStream.is_open()) {
