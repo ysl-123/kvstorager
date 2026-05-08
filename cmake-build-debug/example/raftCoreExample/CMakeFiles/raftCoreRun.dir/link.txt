@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/raftCoreRun.dir/raftKvDB.cpp.o -o /root/ysl/kvstorager/bin/raftCoreRun   -L/root/ysl/kvstorager/lib  -Wl,-rpath,/root/ysl/kvstorager/lib /root/ysl/kvstorager/lib/libskip_list_on_raft.a /root/ysl/kvstorager/lib/librpc_lib.a -lprotobuf -lmuduo_net -lmuduo_base -lpthread -ldl -lboost_serialization 
