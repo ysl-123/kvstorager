@@ -1,6 +1,8 @@
 file(REMOVE_RECURSE
   "/root/ysl/kvstorager/bin/callerMain"
   "/root/ysl/kvstorager/bin/callerMain.pdb"
+  "CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.o"
+  "CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.o.d"
   "CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o"
   "CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o.d"
   "CMakeFiles/callerMain.dir/__/__/src/raftClerk/clerk.cpp.o"

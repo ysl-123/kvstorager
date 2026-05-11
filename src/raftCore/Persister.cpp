@@ -1,8 +1,8 @@
-//
-// Created by swx on 23-5-30.
-//
 #include "Persister.h"
+#include "logger.h"
 #include "util.h"
+
+#define DPrintf LOG_DEBUG
 
 // todo:会涉及反复打开文件的操作，没有考虑如果文件出现问题会怎么办？？
 void Persister::Save(const std::string raftstate, const std::string snapshot) {
@@ -84,6 +84,7 @@ Persister::Persister(const int me)
     fileOpenFlag = false;
   }
   if (!fileOpenFlag) {
+    LOG_ERROR("persister file open error");
     DPrintf("[func-Persister::Persister] file open error");
   }
   /**

@@ -328,7 +328,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=15
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=11
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP
@@ -374,7 +374,7 @@ CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 //linker supports push/pop state
 _CMAKE_LINKER_PUSHPOP_STATE_SUPPORTED:INTERNAL=TRUE
 //Description of the variable
-src_common:INTERNAL=/root/ysl/kvstorager/src/common/util.cpp
+src_common:INTERNAL=/root/ysl/kvstorager/src/common/logger.cc;/root/ysl/kvstorager/src/common/util.cpp
 //Description of the variable
 src_fiber:INTERNAL=/root/ysl/kvstorager/src/fiber/fd_manager.cpp;/root/ysl/kvstorager/src/fiber/fiber.cpp;/root/ysl/kvstorager/src/fiber/hook.cpp;/root/ysl/kvstorager/src/fiber/iomanager.cpp;/root/ysl/kvstorager/src/fiber/scheduler.cpp;/root/ysl/kvstorager/src/fiber/thread.cpp;/root/ysl/kvstorager/src/fiber/timer.cpp;/root/ysl/kvstorager/src/fiber/utils.cpp
 //Description of the variable

@@ -130,6 +130,30 @@ rpc_lib/fast:
 	cd /root/ysl/kvstorager/cmake-build-debug && $(MAKE) $(MAKESILENT) -f src/rpc/CMakeFiles/rpc_lib.dir/build.make src/rpc/CMakeFiles/rpc_lib.dir/build
 .PHONY : rpc_lib/fast
 
+__/common/logger.o: __/common/logger.cc.o
+.PHONY : __/common/logger.o
+
+# target to build an object file
+__/common/logger.cc.o:
+	cd /root/ysl/kvstorager/cmake-build-debug && $(MAKE) $(MAKESILENT) -f src/rpc/CMakeFiles/rpc_lib.dir/build.make src/rpc/CMakeFiles/rpc_lib.dir/__/common/logger.cc.o
+.PHONY : __/common/logger.cc.o
+
+__/common/logger.i: __/common/logger.cc.i
+.PHONY : __/common/logger.i
+
+# target to preprocess a source file
+__/common/logger.cc.i:
+	cd /root/ysl/kvstorager/cmake-build-debug && $(MAKE) $(MAKESILENT) -f src/rpc/CMakeFiles/rpc_lib.dir/build.make src/rpc/CMakeFiles/rpc_lib.dir/__/common/logger.cc.i
+.PHONY : __/common/logger.cc.i
+
+__/common/logger.s: __/common/logger.cc.s
+.PHONY : __/common/logger.s
+
+# target to generate assembly for a file
+__/common/logger.cc.s:
+	cd /root/ysl/kvstorager/cmake-build-debug && $(MAKE) $(MAKESILENT) -f src/rpc/CMakeFiles/rpc_lib.dir/build.make src/rpc/CMakeFiles/rpc_lib.dir/__/common/logger.cc.s
+.PHONY : __/common/logger.cc.s
+
 __/common/util.o: __/common/util.cpp.o
 .PHONY : __/common/util.o
 
@@ -283,6 +307,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... rpc_lib"
+	@echo "... __/common/logger.o"
+	@echo "... __/common/logger.i"
+	@echo "... __/common/logger.s"
 	@echo "... __/common/util.o"
 	@echo "... __/common/util.i"
 	@echo "... __/common/util.s"

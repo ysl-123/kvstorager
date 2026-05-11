@@ -111,10 +111,24 @@ example/raftCoreExample/CMakeFiles/callerMain.dir/caller.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/callerMain.dir/caller.cpp.s"
 	cd /root/ysl/kvstorager/cmake-build-debug/example/raftCoreExample && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /root/ysl/kvstorager/example/raftCoreExample/caller.cpp -o CMakeFiles/callerMain.dir/caller.cpp.s
 
+example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.o: example/raftCoreExample/CMakeFiles/callerMain.dir/flags.make
+example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.o: /root/ysl/kvstorager/src/common/logger.cc
+example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.o: example/raftCoreExample/CMakeFiles/callerMain.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/root/ysl/kvstorager/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.o"
+	cd /root/ysl/kvstorager/cmake-build-debug/example/raftCoreExample && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.o -MF CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.o.d -o CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.o -c /root/ysl/kvstorager/src/common/logger.cc
+
+example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.i"
+	cd /root/ysl/kvstorager/cmake-build-debug/example/raftCoreExample && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /root/ysl/kvstorager/src/common/logger.cc > CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.i
+
+example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.s"
+	cd /root/ysl/kvstorager/cmake-build-debug/example/raftCoreExample && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /root/ysl/kvstorager/src/common/logger.cc -o CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.s
+
 example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o: example/raftCoreExample/CMakeFiles/callerMain.dir/flags.make
 example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o: /root/ysl/kvstorager/src/common/util.cpp
 example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o: example/raftCoreExample/CMakeFiles/callerMain.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/root/ysl/kvstorager/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/root/ysl/kvstorager/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o"
 	cd /root/ysl/kvstorager/cmake-build-debug/example/raftCoreExample && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o -MF CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o.d -o CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o -c /root/ysl/kvstorager/src/common/util.cpp
 
 example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.i: cmake_force
@@ -130,6 +144,7 @@ callerMain_OBJECTS = \
 "CMakeFiles/callerMain.dir/__/__/src/raftClerk/clerk.cpp.o" \
 "CMakeFiles/callerMain.dir/__/__/src/raftClerk/raftServerRpcUtil.cpp.o" \
 "CMakeFiles/callerMain.dir/caller.cpp.o" \
+"CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.o" \
 "CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o"
 
 # External object files for target callerMain
@@ -138,11 +153,12 @@ callerMain_EXTERNAL_OBJECTS =
 /root/ysl/kvstorager/bin/callerMain: example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/raftClerk/clerk.cpp.o
 /root/ysl/kvstorager/bin/callerMain: example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/raftClerk/raftServerRpcUtil.cpp.o
 /root/ysl/kvstorager/bin/callerMain: example/raftCoreExample/CMakeFiles/callerMain.dir/caller.cpp.o
+/root/ysl/kvstorager/bin/callerMain: example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.o
 /root/ysl/kvstorager/bin/callerMain: example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o
 /root/ysl/kvstorager/bin/callerMain: example/raftCoreExample/CMakeFiles/callerMain.dir/build.make
 /root/ysl/kvstorager/bin/callerMain: /root/ysl/kvstorager/lib/libskip_list_on_raft.a
 /root/ysl/kvstorager/bin/callerMain: example/raftCoreExample/CMakeFiles/callerMain.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/root/ysl/kvstorager/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable /root/ysl/kvstorager/bin/callerMain"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/root/ysl/kvstorager/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable /root/ysl/kvstorager/bin/callerMain"
 	cd /root/ysl/kvstorager/cmake-build-debug/example/raftCoreExample && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/callerMain.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

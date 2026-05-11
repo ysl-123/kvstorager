@@ -8,6 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/root/ysl/kvstorager/src/common/logger.cc" "src/rpc/CMakeFiles/rpc_lib.dir/__/common/logger.cc.o" "gcc" "src/rpc/CMakeFiles/rpc_lib.dir/__/common/logger.cc.o.d"
   "/root/ysl/kvstorager/src/common/util.cpp" "src/rpc/CMakeFiles/rpc_lib.dir/__/common/util.cpp.o" "gcc" "src/rpc/CMakeFiles/rpc_lib.dir/__/common/util.cpp.o.d"
   "/root/ysl/kvstorager/src/rpc/mprpcchannel.cpp" "src/rpc/CMakeFiles/rpc_lib.dir/mprpcchannel.cpp.o" "gcc" "src/rpc/CMakeFiles/rpc_lib.dir/mprpcchannel.cpp.o.d"
   "/root/ysl/kvstorager/src/rpc/mprpcconfig.cpp" "src/rpc/CMakeFiles/rpc_lib.dir/mprpcconfig.cpp.o" "gcc" "src/rpc/CMakeFiles/rpc_lib.dir/mprpcconfig.cpp.o.d"

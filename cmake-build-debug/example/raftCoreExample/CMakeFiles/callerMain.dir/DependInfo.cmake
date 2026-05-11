@@ -8,6 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/root/ysl/kvstorager/src/common/logger.cc" "example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.o" "gcc" "example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.o.d"
   "/root/ysl/kvstorager/src/common/util.cpp" "example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o" "gcc" "example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o.d"
   "/root/ysl/kvstorager/src/raftClerk/clerk.cpp" "example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/raftClerk/clerk.cpp.o" "gcc" "example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/raftClerk/clerk.cpp.o.d"
   "/root/ysl/kvstorager/src/raftClerk/raftServerRpcUtil.cpp" "example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/raftClerk/raftServerRpcUtil.cpp.o" "gcc" "example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/raftClerk/raftServerRpcUtil.cpp.o.d"

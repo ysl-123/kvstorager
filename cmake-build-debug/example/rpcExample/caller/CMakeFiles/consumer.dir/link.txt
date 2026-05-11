@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/consumer.dir/callFriendService.cpp.o CMakeFiles/consumer.dir/__/friend.pb.cc.o -o /root/ysl/kvstorager/bin/consumer   -L/root/ysl/kvstorager/lib  -Wl,-rpath,/root/ysl/kvstorager/lib /root/ysl/kvstorager/lib/librpc_lib.a -lprotobuf -lboost_serialization 

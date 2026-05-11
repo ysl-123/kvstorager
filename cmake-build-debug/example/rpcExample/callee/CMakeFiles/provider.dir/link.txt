@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/provider.dir/friendService.cpp.o CMakeFiles/provider.dir/__/friend.pb.cc.o -o /root/ysl/kvstorager/bin/provider   -L/root/ysl/kvstorager/lib  -Wl,-rpath,/root/ysl/kvstorager/lib /root/ysl/kvstorager/lib/librpc_lib.a -lprotobuf -lmuduo_net -lmuduo_base -lpthread -lboost_serialization 

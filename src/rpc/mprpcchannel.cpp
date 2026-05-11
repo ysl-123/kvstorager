@@ -18,6 +18,7 @@ header_size + service_name method_name args_size + args
 void MprpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
                               google::protobuf::RpcController* controller, const google::protobuf::Message* request,
                               google::protobuf::Message* response, google::protobuf::Closure* done) {
+
   if (m_clientFd == -1) {
     std::string errMsg;
     bool rt = newConnect(m_ip.c_str(), m_port, &errMsg);
@@ -148,23 +149,15 @@ bool MprpcChannel::newConnect(const char* ip, uint16_t port, string* errMsg) {
     sprintf(errtxt, "connect fail! errno:%d", errno);
     m_clientFd = -1;
     *errMsg = errtxt;
+    cout<<"连接失败";
     return false;
   }
   m_clientFd = clientfd;
+  cout<<"连接成功";
   return true;
 }
 //应该是每一次调用的时候都会新创建一个连接吧
 MprpcChannel::MprpcChannel(string ip, short port, bool connectNow) : m_ip(ip), m_port(port), m_clientFd(-1) {
-  // 使用tcp编程，完成rpc方法的远程调用，使用的是短连接，因此每次都要重新连接上去，待改成长连接。
-  // 没有连接或者连接已经断开，那么就要重新连接呢,会一直不断地重试
-  // 读取配置文件rpcserver的信息
-  // std::string ip = MprpcApplication::GetInstance().GetConfig().Load("rpcserverip");
-  // uint16_t port = atoi(MprpcApplication::GetInstance().GetConfig().Load("rpcserverport").c_str());
-  // rpc调用方想调用service_name的method_name服务，需要查询zk上该服务所在的host信息
-  //  /UserServiceRpc/Login
-
-  //connectNow  是否立即建立连接
-  //可以允许延迟连接 如果connectNow=false  直接return所以就在MprpcChannel::CallMethod的时候进行一次连接呢。
   if (!connectNow) {
     return;
   }  

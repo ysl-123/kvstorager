@@ -139,10 +139,24 @@ src/rpc/CMakeFiles/rpc_lib.dir/rpcprovider.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rpc_lib.dir/rpcprovider.cpp.s"
 	cd /root/ysl/kvstorager/cmake-build-debug/src/rpc && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /root/ysl/kvstorager/src/rpc/rpcprovider.cpp -o CMakeFiles/rpc_lib.dir/rpcprovider.cpp.s
 
+src/rpc/CMakeFiles/rpc_lib.dir/__/common/logger.cc.o: src/rpc/CMakeFiles/rpc_lib.dir/flags.make
+src/rpc/CMakeFiles/rpc_lib.dir/__/common/logger.cc.o: /root/ysl/kvstorager/src/common/logger.cc
+src/rpc/CMakeFiles/rpc_lib.dir/__/common/logger.cc.o: src/rpc/CMakeFiles/rpc_lib.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/root/ysl/kvstorager/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object src/rpc/CMakeFiles/rpc_lib.dir/__/common/logger.cc.o"
+	cd /root/ysl/kvstorager/cmake-build-debug/src/rpc && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/rpc/CMakeFiles/rpc_lib.dir/__/common/logger.cc.o -MF CMakeFiles/rpc_lib.dir/__/common/logger.cc.o.d -o CMakeFiles/rpc_lib.dir/__/common/logger.cc.o -c /root/ysl/kvstorager/src/common/logger.cc
+
+src/rpc/CMakeFiles/rpc_lib.dir/__/common/logger.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rpc_lib.dir/__/common/logger.cc.i"
+	cd /root/ysl/kvstorager/cmake-build-debug/src/rpc && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /root/ysl/kvstorager/src/common/logger.cc > CMakeFiles/rpc_lib.dir/__/common/logger.cc.i
+
+src/rpc/CMakeFiles/rpc_lib.dir/__/common/logger.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rpc_lib.dir/__/common/logger.cc.s"
+	cd /root/ysl/kvstorager/cmake-build-debug/src/rpc && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /root/ysl/kvstorager/src/common/logger.cc -o CMakeFiles/rpc_lib.dir/__/common/logger.cc.s
+
 src/rpc/CMakeFiles/rpc_lib.dir/__/common/util.cpp.o: src/rpc/CMakeFiles/rpc_lib.dir/flags.make
 src/rpc/CMakeFiles/rpc_lib.dir/__/common/util.cpp.o: /root/ysl/kvstorager/src/common/util.cpp
 src/rpc/CMakeFiles/rpc_lib.dir/__/common/util.cpp.o: src/rpc/CMakeFiles/rpc_lib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/root/ysl/kvstorager/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object src/rpc/CMakeFiles/rpc_lib.dir/__/common/util.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/root/ysl/kvstorager/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object src/rpc/CMakeFiles/rpc_lib.dir/__/common/util.cpp.o"
 	cd /root/ysl/kvstorager/cmake-build-debug/src/rpc && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/rpc/CMakeFiles/rpc_lib.dir/__/common/util.cpp.o -MF CMakeFiles/rpc_lib.dir/__/common/util.cpp.o.d -o CMakeFiles/rpc_lib.dir/__/common/util.cpp.o -c /root/ysl/kvstorager/src/common/util.cpp
 
 src/rpc/CMakeFiles/rpc_lib.dir/__/common/util.cpp.i: cmake_force
@@ -160,6 +174,7 @@ rpc_lib_OBJECTS = \
 "CMakeFiles/rpc_lib.dir/mprpccontroller.cpp.o" \
 "CMakeFiles/rpc_lib.dir/rpcheader.pb.cpp.o" \
 "CMakeFiles/rpc_lib.dir/rpcprovider.cpp.o" \
+"CMakeFiles/rpc_lib.dir/__/common/logger.cc.o" \
 "CMakeFiles/rpc_lib.dir/__/common/util.cpp.o"
 
 # External object files for target rpc_lib
@@ -170,10 +185,11 @@ rpc_lib_EXTERNAL_OBJECTS =
 /root/ysl/kvstorager/lib/librpc_lib.a: src/rpc/CMakeFiles/rpc_lib.dir/mprpccontroller.cpp.o
 /root/ysl/kvstorager/lib/librpc_lib.a: src/rpc/CMakeFiles/rpc_lib.dir/rpcheader.pb.cpp.o
 /root/ysl/kvstorager/lib/librpc_lib.a: src/rpc/CMakeFiles/rpc_lib.dir/rpcprovider.cpp.o
+/root/ysl/kvstorager/lib/librpc_lib.a: src/rpc/CMakeFiles/rpc_lib.dir/__/common/logger.cc.o
 /root/ysl/kvstorager/lib/librpc_lib.a: src/rpc/CMakeFiles/rpc_lib.dir/__/common/util.cpp.o
 /root/ysl/kvstorager/lib/librpc_lib.a: src/rpc/CMakeFiles/rpc_lib.dir/build.make
 /root/ysl/kvstorager/lib/librpc_lib.a: src/rpc/CMakeFiles/rpc_lib.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/root/ysl/kvstorager/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking CXX static library /root/ysl/kvstorager/lib/librpc_lib.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/root/ysl/kvstorager/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Linking CXX static library /root/ysl/kvstorager/lib/librpc_lib.a"
 	cd /root/ysl/kvstorager/cmake-build-debug/src/rpc && $(CMAKE_COMMAND) -P CMakeFiles/rpc_lib.dir/cmake_clean_target.cmake
 	cd /root/ysl/kvstorager/cmake-build-debug/src/rpc && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/rpc_lib.dir/link.txt --verbose=$(VERBOSE)
 

@@ -4,10 +4,11 @@
 #include <cstdio>
 #include <ctime>
 #include <iomanip>
+#include <logger.h>
 //不符合这个条件报错
 void myAssert(bool condition, std::string message) {
   if (!condition) {
-    std::cerr << "Error: " << message << std::endl;
+    LOG_ERROR("Error: %s", message.c_str());
     std::exit(EXIT_FAILURE);
   }
 }
@@ -54,16 +55,17 @@ bool isReleasePort(unsigned short usPort) {
 }
 
 void DPrintf(const char *format, ...) {
-  if (Debug) {
-    // 获取当前的日期，然后取日志信息，写入相应的日志文件当中 a+
-    time_t now = time(nullptr);
-    tm *nowtm = localtime(&now);
-    va_list args;
-    va_start(args, format);
-    std::printf("[%d-%d-%d-%d-%d-%d] ", nowtm->tm_year + 1900, nowtm->tm_mon + 1, nowtm->tm_mday, nowtm->tm_hour,
-                nowtm->tm_min, nowtm->tm_sec);
-    std::vprintf(format, args);
-    std::printf("\n");
-    va_end(args);
+  if (!Debug) {
+    return;
   }
+
+  va_list args;
+  va_start(args, format);
+
+  char buffer[2048] = {0};
+  vsnprintf(buffer, sizeof(buffer), format, args);
+
+  va_end(args);
+
+  Logger::GetInstance().Log(DEBUG, buffer);
 }

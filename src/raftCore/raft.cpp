@@ -234,7 +234,7 @@ void Raft::RequestVote(const raftRpcProctoc::RequestVoteArgs* args, raftRpcProct
   //	现在节点任期都是相同的(任期小的也已经更新到新的args的term了)，还需要检查log的term和index是不是匹配的了
 
   int lastLogTerm = getLastLogTerm();
-  // args->lastlogindex() > lastTerm || (args->lastlogterm() == lastTerm && index >= lastIndex);
+  // term < lastTerm || (term == lastTerm && index < lastIndex);
   if (!UpToDate(args->lastlogindex(), args->lastlogterm())) {
     
     reply->set_term(m_currentTerm);
@@ -283,27 +283,6 @@ void Raft::applierTicker() {
 
 bool Raft::CondInstallSnapshot(int lastIncludedTerm, int lastIncludedIndex, std::string snapshot) {
   return true;
-  //// Your code here (2D).
-  // rf.mu.Lock()
-  // defer rf.mu.Unlock()
-  // DPrintf("{Node %v} service calls CondInstallSnapshot with lastIncludedTerm %v and lastIncludedIndex {%v} to check
-  // whether snapshot is still valid in term %v", rf.me, lastIncludedTerm, lastIncludedIndex, rf.currentTerm)
-  //// outdated snapshot
-  // if lastIncludedIndex <= rf.commitIndex {
-  //	return false
-  // }
-  //
-  // lastLogIndex, _ := rf.getLastLogIndexAndTerm()
-  // if lastIncludedIndex > lastLogIndex {
-  //	rf.logs = make([]LogEntry, 0)
-  // } else {
-  //	rf.logs = rf.logs[rf.getSlicesIndexFromLogIndex(lastIncludedIndex)+1:]
-  // }
-  //// update dummy entry with lastIncludedTerm and lastIncludedIndex
-  // rf.lastApplied, rf.commitIndex = lastIncludedIndex, lastIncludedIndex
-  //
-  // rf.persister.Save(rf.persistData(), snapshot)
-  // return true
 }
 
 void Raft::doElection() {
@@ -452,13 +431,6 @@ void Raft::electionTimeOutTicker() {
 
       // 计算时间差并输出结果（单位为毫秒）
       std::chrono::duration<double, std::milli> duration = end - start;
-
-      // 使用ANSI控制序列将输出颜色修改为紫色
-      std::cout << "\033[1;35m electionTimeOutTicker();函数设置睡眠时间为: "
-                << std::chrono::duration_cast<std::chrono::milliseconds>(suitableSleepTime).count() << " 毫秒\033[0m"
-                << std::endl;
-      std::cout << "\033[1;35m electionTimeOutTicker();函数实际睡眠时间为: " << duration.count() << " 毫秒\033[0m"
-                << std::endl;
     }
     // 每次收到心跳（也会包含信息）的时候，就会重置一次自己的m_lastResetElectionTime
     if (std::chrono::duration<double, std::milli>(m_lastResetElectionTime - wakeTime).count() > 0) {
@@ -551,10 +523,6 @@ void Raft::leaderHearBeatTicker() {
     }
     // 如果算出来的‘剩余可睡眠时间’，大于 1 毫秒，那我就准备去睡了。
     if (std::chrono::duration<double, std::milli>(suitableSleepTime).count() > 1) {
-      //\033[1;35m，“加粗紫色      \033[0m，回到了普通的白字
-      std::cout << atomicCount << "\033[1;35m leaderHearBeatTicker();函数设置睡眠时间为: "
-                << std::chrono::duration_cast<std::chrono::milliseconds>(suitableSleepTime).count() << " 毫秒\033[0m"
-                << std::endl;
       // 获取当前时间点
       auto start = std::chrono::steady_clock::now();
 
@@ -565,10 +533,6 @@ void Raft::leaderHearBeatTicker() {
 
       // 计算时间差并输出结果（单位为毫秒）
       std::chrono::duration<double, std::milli> duration = end - start;
-
-      // 使用ANSI控制序列将输出颜色修改为紫色
-      std::cout << atomicCount << "\033[1;35m leaderHearBeatTicker();函数实际睡眠时间为: " << duration.count()
-                << " 毫秒\033[0m" << std::endl;
       ++atomicCount;  // 就是第几次leaderHearBeatTicker()的作用而已
     }
     // 客户端此时发来其他存的请求，其他线程给follwer发了消息，就代表可以替代一次心跳
@@ -1012,7 +976,7 @@ void Raft::init(std::vector<std::shared_ptr<RaftRpcUtil>> peers, int me, std::sh
           m_currentTerm, m_lastSnapshotIncludeIndex, m_lastSnapshotIncludeTerm);
 
   m_mtx.unlock();
-
+  //协程
   m_ioManager = std::make_unique<monsoon::IOManager>(FIBER_THREAD_NUM, FIBER_USE_CALLER_THREAD);
 
   // start ticker fiber to start elections

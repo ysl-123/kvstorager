@@ -1,6 +1,8 @@
 file(REMOVE_RECURSE
   "/root/ysl/kvstorager/lib/librpc_lib.a"
   "/root/ysl/kvstorager/lib/librpc_lib.pdb"
+  "CMakeFiles/rpc_lib.dir/__/common/logger.cc.o"
+  "CMakeFiles/rpc_lib.dir/__/common/logger.cc.o.d"
   "CMakeFiles/rpc_lib.dir/__/common/util.cpp.o"
   "CMakeFiles/rpc_lib.dir/__/common/util.cpp.o.d"
   "CMakeFiles/rpc_lib.dir/mprpcchannel.cpp.o"

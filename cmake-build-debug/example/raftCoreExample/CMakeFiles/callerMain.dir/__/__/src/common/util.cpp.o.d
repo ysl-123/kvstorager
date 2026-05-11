@@ -648,4 +648,6 @@ example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/util.cpp.o: \
  /usr/include/c++/11/bits/random.tcc /usr/include/c++/11/numeric \
  /usr/include/c++/11/bits/stl_numeric.h \
  /usr/include/c++/11/pstl/glue_numeric_defs.h /usr/include/c++/11/thread \
- /root/ysl/kvstorager/src/common/include/config.h
+ /root/ysl/kvstorager/src/common/include/config.h \
+ /root/ysl/kvstorager/src/common/include/logger.h \
+ /root/ysl/kvstorager/src/common/include/lockqueue.h

@@ -144,6 +144,30 @@ callerMain/fast:
 	cd /root/ysl/kvstorager/cmake-build-debug && $(MAKE) $(MAKESILENT) -f example/raftCoreExample/CMakeFiles/callerMain.dir/build.make example/raftCoreExample/CMakeFiles/callerMain.dir/build
 .PHONY : callerMain/fast
 
+__/__/src/common/logger.o: __/__/src/common/logger.cc.o
+.PHONY : __/__/src/common/logger.o
+
+# target to build an object file
+__/__/src/common/logger.cc.o:
+	cd /root/ysl/kvstorager/cmake-build-debug && $(MAKE) $(MAKESILENT) -f example/raftCoreExample/CMakeFiles/callerMain.dir/build.make example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.o
+.PHONY : __/__/src/common/logger.cc.o
+
+__/__/src/common/logger.i: __/__/src/common/logger.cc.i
+.PHONY : __/__/src/common/logger.i
+
+# target to preprocess a source file
+__/__/src/common/logger.cc.i:
+	cd /root/ysl/kvstorager/cmake-build-debug && $(MAKE) $(MAKESILENT) -f example/raftCoreExample/CMakeFiles/callerMain.dir/build.make example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.i
+.PHONY : __/__/src/common/logger.cc.i
+
+__/__/src/common/logger.s: __/__/src/common/logger.cc.s
+.PHONY : __/__/src/common/logger.s
+
+# target to generate assembly for a file
+__/__/src/common/logger.cc.s:
+	cd /root/ysl/kvstorager/cmake-build-debug && $(MAKE) $(MAKESILENT) -f example/raftCoreExample/CMakeFiles/callerMain.dir/build.make example/raftCoreExample/CMakeFiles/callerMain.dir/__/__/src/common/logger.cc.s
+.PHONY : __/__/src/common/logger.cc.s
+
 __/__/src/common/util.o: __/__/src/common/util.cpp.o
 .PHONY : __/__/src/common/util.o
 
@@ -274,6 +298,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... callerMain"
 	@echo "... raftCoreRun"
+	@echo "... __/__/src/common/logger.o"
+	@echo "... __/__/src/common/logger.i"
+	@echo "... __/__/src/common/logger.s"
 	@echo "... __/__/src/common/util.o"
 	@echo "... __/__/src/common/util.i"
 	@echo "... __/__/src/common/util.s"

@@ -41,7 +41,9 @@ class DeferClass {
 void DPrintf(const char* format, ...);
 
 void myAssert(bool condition, std::string message = "Assertion failed!");
-
+inline std::string format(const char* s) {
+  return std::string(s);
+}
 template <typename... Args>
 std::string format(const char* format_str, Args... args) {
   int size_s = std::snprintf(nullptr, 0, format_str, args...) + 1;  // "\0"

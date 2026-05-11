@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/test_iomanager.dir/test_iomanager.cpp.o -o /root/ysl/kvstorager/bin/test_iomanager   -L/root/ysl/kvstorager/lib  -Wl,-rpath,/root/ysl/kvstorager/lib /root/ysl/kvstorager/lib/libfiber_lib.a -lpthread -ldl -ldl 

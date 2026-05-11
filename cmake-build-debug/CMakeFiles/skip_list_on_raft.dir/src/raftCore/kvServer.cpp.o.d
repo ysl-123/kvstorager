@@ -853,4 +853,6 @@ CMakeFiles/skip_list_on_raft.dir/src/raftCore/kvServer.cpp.o: \
  /usr/local/include/muduo/net/Endian.h \
  /usr/local/include/muduo/net/TcpServer.h \
  /usr/local/include/muduo/base/Atomic.h \
- /root/ysl/kvstorager/src/rpc/include/mprpcconfig.h
+ /root/ysl/kvstorager/src/rpc/include/mprpcconfig.h \
+ /root/ysl/kvstorager/src/common/include/logger.h \
+ /root/ysl/kvstorager/src/common/include/lockqueue.h
